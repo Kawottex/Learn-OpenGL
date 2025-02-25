@@ -27,6 +27,9 @@
     <ClInclude Include="include\KHR\khrplatform.h">
       <Filter>Fichiers d%27en-tête\GLAD</Filter>
     </ClInclude>
+    <ClInclude Include="include\Shader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">

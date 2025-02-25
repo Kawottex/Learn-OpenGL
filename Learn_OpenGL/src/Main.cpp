@@ -4,16 +4,27 @@
 
 const char* vertexShaderSource = "#version 330 core\n"
 	"layout (location = 0) in vec3 aPos;\n"
+	"layout (location = 1) in vec3 aColor;\n"
+	"out vec3 ourColor;\n"
 	"void main()\n"
 	"{\n"
 	" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+	" ourColor = aColor;\n"
 	"}\0";
 
-const char* fragmentShaderSource = "#version 330 core\n"
+const char* baseFragmentShaderSource = "#version 330 core\n"
+	"out vec4 FragColor;\n"
+	"in vec3 ourColor;\n"
+	"void main()\n"
+	"{\n"
+	" FragColor = vec4(ourColor, 1.0);\n"
+	"}\n";
+
+const char* yellowFragmentShaderSource = "#version 330 core\n"
 	"out vec4 FragColor;\n"
 	"void main()\n"
 	"{\n"
-	" FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);"
+	" FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);"
 	"}\n";
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -95,7 +106,7 @@ int attachShaders(unsigned int vertexShader, unsigned int fragmentShader, unsign
 	return 0;
 }
 
-int setupShaderProgram(unsigned int& shaderProgram)
+int setupShaderProgram(const char* fragmentShaderSource, unsigned int& shaderProgram)
 {
 	unsigned int vertexShader;
 	unsigned int fragmentShader;
@@ -127,21 +138,20 @@ unsigned int setupEBO(const unsigned int* indices, unsigned int size)
 	return EBO;
 }
 
-int setupTriangleVAO(unsigned int& VAO)
+int setupTriangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
 {
-	float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.0f, 0.5f, 0.0f
-	};
-
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	setupVBO(vertices, sizeof(vertices));
+	setupVBO(vertices, ver_size);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 	return 0;
 }
 
@@ -171,10 +181,12 @@ int setupRectangleVAO(unsigned int& VAO)
 
 void drawTriangle(unsigned int shaderProgram, unsigned int VAO)
 {
+	int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
 	glUseProgram(shaderProgram);
+	//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	glBindVertexArray(0);
 }
 
 void drawRectangle(unsigned int shaderProgram, unsigned int VAO)
@@ -182,17 +194,35 @@ void drawRectangle(unsigned int shaderProgram, unsigned int VAO)
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
 }
 
 void mainLoop(GLFWwindow* window)
 {
-	unsigned int shaderProgram;
-	unsigned int VAO;
+	unsigned int baseShaderProgram;
+	unsigned int yellowShaderProgram;
+	unsigned int firstVAO;
+	unsigned int secVAO;
 
-	setupShaderProgram(shaderProgram);
-	//setupTriangleVAO(VAO);
-	setupRectangleVAO(VAO);
+	setupShaderProgram(baseFragmentShaderSource, baseShaderProgram);
+	setupShaderProgram(yellowFragmentShaderSource, yellowShaderProgram);
+
+
+	float first_tri_vert[] = {
+		// positions		// colors
+		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	float sec_tri_vert[] = {
+		0.0f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.25f, 0.5f, 0.0f,
+	};
+
+	setupTriangleVAO(firstVAO, first_tri_vert, sizeof(first_tri_vert));
+	//setupTriangleVAO(secVAO, sec_tri_vert, sizeof(sec_tri_vert));
+	//setupRectangleVAO(VAO);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -201,8 +231,12 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//drawTriangle(shaderProgram, VAO);
-		drawRectangle(shaderProgram, VAO);
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+
+		drawTriangle(baseShaderProgram, firstVAO);
+		//drawTriangle(baseShaderProgram, secVAO, greenValue);
+		//drawRectangle(shaderProgram, VAO);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

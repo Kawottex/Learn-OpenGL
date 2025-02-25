@@ -1,2 +1,4 @@
 ﻿  Main.cpp
-  Learn_OpenGL.vcxproj -> D:\Projets\Learn_OpenGL\x64\Debug\Learn_OpenGL.exe
+D:\Projets\Learn-OpenGL\Learn_OpenGL\src\Main.cpp(234,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Projets\Learn-OpenGL\Learn_OpenGL\src\Main.cpp(204,15): warning C4101: 'secVAO': unreferenced local variable
+  Learn_OpenGL.vcxproj -> D:\Projets\Learn-OpenGL\Learn_OpenGL\x64\Debug\Learn_OpenGL.exe
