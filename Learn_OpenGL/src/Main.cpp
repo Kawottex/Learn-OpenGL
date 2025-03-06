@@ -1,31 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
-const char* vertexShaderSource = "#version 330 core\n"
-	"layout (location = 0) in vec3 aPos;\n"
-	"layout (location = 1) in vec3 aColor;\n"
-	"out vec3 ourColor;\n"
-	"void main()\n"
-	"{\n"
-	" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-	" ourColor = aColor;\n"
-	"}\0";
-
-const char* baseFragmentShaderSource = "#version 330 core\n"
-	"out vec4 FragColor;\n"
-	"in vec3 ourColor;\n"
-	"void main()\n"
-	"{\n"
-	" FragColor = vec4(ourColor, 1.0);\n"
-	"}\n";
-
-const char* yellowFragmentShaderSource = "#version 330 core\n"
-	"out vec4 FragColor;\n"
-	"void main()\n"
-	"{\n"
-	" FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);"
-	"}\n";
+#include <Shader.h>
+#include <stb_image.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -63,63 +40,6 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-int compileShader(const char* shaderSource, GLenum shaderType, unsigned int& outShader)
-{
-	unsigned int shader;
-	shader = glCreateShader(shaderType);
-	glShaderSource(shader, 1, &shaderSource, NULL);
-	glCompileShader(shader);
-
-	outShader = shader;
-
-	int success;
-	char infoLog[512];
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
-		return -1;
-	}
-	return 0;
-}
-
-int attachShaders(unsigned int vertexShader, unsigned int fragmentShader, unsigned int& outShaderProgram)
-{
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	outShaderProgram = shaderProgram;
-
-	int success;
-	char infoLog[512];
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::ATTACH_FAILED\n" << infoLog << std::endl;
-		return -1;
-	}
-	return 0;
-}
-
-int setupShaderProgram(const char* fragmentShaderSource, unsigned int& shaderProgram)
-{
-	unsigned int vertexShader;
-	unsigned int fragmentShader;
-	compileShader(vertexShaderSource, GL_VERTEX_SHADER, vertexShader);
-	compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER, fragmentShader);
-
-	attachShaders(vertexShader, fragmentShader, shaderProgram);
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	return 0;
-}
-
 unsigned int setupVBO(const float* vertices, unsigned int size)
 {
 	unsigned int VBO;
@@ -155,15 +75,8 @@ int setupTriangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
 	return 0;
 }
 
-int setupRectangleVAO(unsigned int& VAO)
+int setupRectangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
 {
-	float vertices[] = {
-		0.5f, 0.5f, 0.0f,	// top right
-		0.5f, -0.5f, 0.0f,	// bottom right
-		-0.5f, -0.5f, 0.0f,	// bottom left
-		-0.5f, 0.5f, 0.0f	// top left
-	};
-
 	unsigned int indices[] = {
 		0, 1, 3, // first triangle
 		1, 2, 3, // second triangle
@@ -172,57 +85,95 @@ int setupRectangleVAO(unsigned int& VAO)
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	setupVBO(vertices, sizeof(vertices));
+	setupVBO(vertices, ver_size);
 	setupEBO(indices, sizeof(indices));
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 	return 0;
 }
 
-void drawTriangle(unsigned int shaderProgram, unsigned int VAO)
+void drawTriangle(unsigned int VAO)
 {
-	int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-
-	glUseProgram(shaderProgram);
-	//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
-void drawRectangle(unsigned int shaderProgram, unsigned int VAO)
+void drawRectangle(unsigned int VAO)
 {
-	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void mainLoop(GLFWwindow* window)
+void setupTexture(unsigned int &texture)
 {
-	unsigned int baseShaderProgram;
-	unsigned int yellowShaderProgram;
-	unsigned int firstVAO;
-	unsigned int secVAO;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
-	setupShaderProgram(baseFragmentShaderSource, baseShaderProgram);
-	setupShaderProgram(yellowFragmentShaderSource, yellowShaderProgram);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load(".\\resources\\textures\\wall.jpg", &width, &height, &nrChannels, 0);
 
-	float first_tri_vert[] = {
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+}
+
+void setupTriangle(unsigned int& VAO)
+{
+	float vertices[] = {
 		// positions		// colors
 		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
 		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		-0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	float sec_tri_vert[] = {
-		0.0f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.25f, 0.5f, 0.0f,
+	setupTriangleVAO(VAO, vertices, sizeof(vertices));
+}
+
+void setupRectangle(unsigned int& VAO)
+{
+	float vertices[] = {
+		// positions		// colors			// texture coords
+		 0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f, 1.0f,	// top right
+		 0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f, 0.0f,	// bottom right
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,	// bottom left
+		-0.5f,  0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 0.0f, 1.0f	// top left
 	};
 
-	setupTriangleVAO(firstVAO, first_tri_vert, sizeof(first_tri_vert));
-	//setupTriangleVAO(secVAO, sec_tri_vert, sizeof(sec_tri_vert));
-	//setupRectangleVAO(VAO);
+	setupRectangleVAO(VAO, vertices, sizeof(vertices));
+}
+
+void mainLoop(GLFWwindow* window)
+{
+	unsigned int texture;
+	unsigned int VAO;
+
+	//setupTriangle(VAO);
+	setupRectangle(VAO);
+	setupTexture(texture);
+
+	Shader ourShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -231,12 +182,11 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		float timeValue = glfwGetTime();
-		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		//double timeValue = glfwGetTime();
 
-		drawTriangle(baseShaderProgram, firstVAO);
-		//drawTriangle(baseShaderProgram, secVAO, greenValue);
-		//drawRectangle(shaderProgram, VAO);
+		ourShader.Use();
+		//drawTriangle(VAO);
+		drawRectangle(VAO);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
