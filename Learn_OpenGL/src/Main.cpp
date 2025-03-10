@@ -32,11 +32,19 @@ GLFWwindow* initGLFWWindow()
 	return window;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, float& mixPercentage)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
+	}
+	else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		mixPercentage += 0.01f;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		mixPercentage -= 0.01f;
 	}
 }
 
@@ -114,9 +122,12 @@ void drawRectangle(unsigned int VAO)
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void setupTexture(unsigned int &texture)
+unsigned int setupTexture(const char* filename, GLenum texIndex, GLint texFormat)
 {
+	unsigned int texture;
+
 	glGenTextures(1, &texture);
+	glActiveTexture(texIndex);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -124,12 +135,14 @@ void setupTexture(unsigned int &texture)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	stbi_set_flip_vertically_on_load(true);
+
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load(".\\resources\\textures\\wall.jpg", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
 
 	if (data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, width, height, 0, texFormat, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
@@ -137,6 +150,7 @@ void setupTexture(unsigned int &texture)
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
+	return texture;
 }
 
 void setupTriangle(unsigned int& VAO)
@@ -166,25 +180,30 @@ void setupRectangle(unsigned int& VAO)
 
 void mainLoop(GLFWwindow* window)
 {
-	unsigned int texture;
 	unsigned int VAO;
+	float mixPercentage = 0.0f;
 
 	//setupTriangle(VAO);
 	setupRectangle(VAO);
-	setupTexture(texture);
+	setupTexture(".\\resources\\textures\\container.jpg", GL_TEXTURE0, GL_RGB);
+	setupTexture(".\\resources\\textures\\awesomeface.png", GL_TEXTURE1, GL_RGBA);
 
-	Shader ourShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	Shader shader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	shader.Use();
+	shader.SetInt("texture1", 0);
+	shader.SetInt("texture2", 1);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		processInput(window);
+		processInput(window, mixPercentage);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//double timeValue = glfwGetTime();
 
-		ourShader.Use();
+		shader.Use();
+		shader.SetFloat("mixPercentage", mixPercentage);
 		//drawTriangle(VAO);
 		drawRectangle(VAO);
 
