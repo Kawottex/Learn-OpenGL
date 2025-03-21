@@ -4,6 +4,17 @@
 #include <Shader.h>
 #include <stb_image.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -0.1f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -34,17 +45,26 @@ GLFWwindow* initGLFWWindow()
 
 void processInput(GLFWwindow* window, float& mixPercentage)
 {
+	const float cameraSpeed = 2.5f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
-	else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		mixPercentage += 0.01f;
+		cameraPos += cameraSpeed * cameraFront;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		mixPercentage -= 0.01f;
+		cameraPos -= cameraSpeed * cameraFront;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	}
 }
 
@@ -110,6 +130,23 @@ int setupRectangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
 	return 0;
 }
 
+int setupCubeVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	setupVBO(vertices, ver_size);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// texture coord attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	return 0;
+}
+
 void drawTriangle(unsigned int VAO)
 {
 	glBindVertexArray(VAO);
@@ -120,6 +157,55 @@ void drawRectangle(unsigned int VAO)
 {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+void setMVPMatrix(Shader& shader)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.f);
+
+	shader.SetMat4("model", model);
+	shader.SetMat4("view", view);
+	shader.SetMat4("projection", projection);
+}
+
+void drawCube(unsigned int VAO, Shader& shader)
+{
+	glBindVertexArray(VAO);
+	setMVPMatrix(shader);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void drawCubeArray(unsigned int VAO, Shader& shader, glm::vec3 cubePositions[])
+{
+	glBindVertexArray(VAO);
+
+	glm::mat4 view;
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	shader.SetMat4("view", view);
+
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.f);
+	shader.SetMat4("projection", projection);
+
+	for (int i = 0; i < 10; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+
+		float angle = glm::radians(10.0f * i);
+		if (i % 3 == 0)
+		{
+			angle *= (float)glfwGetTime();
+		}
+		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3, 0.5f));
+		shader.SetMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 }
 
 unsigned int setupTexture(const char* filename, GLenum texIndex, GLint texFormat)
@@ -178,13 +264,66 @@ void setupRectangle(unsigned int& VAO)
 	setupRectangleVAO(VAO, vertices, sizeof(vertices));
 }
 
+void setupCube(unsigned int& VAO)
+{
+	float vertices[] = {
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+	};
+
+	setupCubeVAO(VAO, vertices, sizeof(vertices));
+}
+
+void updateDeltaTime()
+{
+	float currentFrame = glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
+}
+
 void mainLoop(GLFWwindow* window)
 {
 	unsigned int VAO;
-	float mixPercentage = 0.0f;
+	float mixPercentage = 0.2f;
 
 	//setupTriangle(VAO);
-	setupRectangle(VAO);
+	//setupRectangle(VAO);
+	setupCube(VAO);
+
 	setupTexture(".\\resources\\textures\\container.jpg", GL_TEXTURE0, GL_RGB);
 	setupTexture(".\\resources\\textures\\awesomeface.png", GL_TEXTURE1, GL_RGBA);
 
@@ -193,19 +332,37 @@ void mainLoop(GLFWwindow* window)
 	shader.SetInt("texture1", 0);
 	shader.SetInt("texture2", 1);
 
+	glEnable(GL_DEPTH_TEST);
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(2.0f, 5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f, 3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f, 2.0f, -2.5f),
+		glm::vec3(1.5f, 0.2f, -1.5f),
+		glm::vec3(-1.3f, 1.0f, -1.5f)
+	};
+
+
 	while (!glfwWindowShouldClose(window))
 	{
+		updateDeltaTime();
 		processInput(window, mixPercentage);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//double timeValue = glfwGetTime();
 
 		shader.Use();
 		shader.SetFloat("mixPercentage", mixPercentage);
-		//drawTriangle(VAO);
-		drawRectangle(VAO);
+
+		//drawCube(VAO, shader);
+		drawCubeArray(VAO, shader, cubePositions);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
