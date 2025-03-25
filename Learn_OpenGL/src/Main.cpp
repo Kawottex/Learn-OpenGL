@@ -2,19 +2,16 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <Shader.h>
+#include <Camera.h>
 #include <stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -0.1f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera;
 
 float lastX = 400, lastY = 300;
-float yaw = -90.0f, pitch = 0;
-float fov = 45.0f;
 bool firstMouse = true;
 
 float deltaTime = 0.0f;
@@ -48,40 +45,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = xpos;
 	lastY = ypos;
 
-	const float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 89.0f)
-	{
-		pitch = 89.0f;
-	}
-	else if (pitch < -89.0f)
-	{
-		pitch = -89.0f;
-	}
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
+	camera.ProcessMouseMovement(xoffset, yoffset, true);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	fov -= (float)yoffset;
-	if (fov < 1.0f)
-	{
-		fov = 1.0f;
-	}
-	else if (fov > 45.0f)
-	{
-		fov = 45.0f;
-	}
+	camera.ProcessMouseScroll(yoffset);
 }
 
 GLFWwindow* initGLFWWindow()
@@ -111,19 +80,19 @@ void processInput(GLFWwindow* window, float& mixPercentage)
 	}
 	else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		cameraPos += cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		cameraPos -= cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
 	}
 }
 
@@ -244,11 +213,10 @@ void drawCubeArray(unsigned int VAO, Shader& shader, glm::vec3 cubePositions[])
 {
 	glBindVertexArray(VAO);
 
-	glm::mat4 view;
-	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	glm::mat4 view = camera.GetViewMatrix();
 	shader.SetMat4("view", view);
 
-	glm::mat4 projection = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.f);
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
 	shader.SetMat4("projection", projection);
 
 	for (int i = 0; i < 10; i++)
@@ -378,6 +346,8 @@ void mainLoop(GLFWwindow* window)
 {
 	unsigned int VAO;
 	float mixPercentage = 0.2f;
+
+	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 	//setupTriangle(VAO);
 	//setupRectangle(VAO);
