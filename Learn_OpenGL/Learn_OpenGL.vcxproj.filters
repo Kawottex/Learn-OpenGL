@@ -903,6 +903,9 @@
     <ClInclude Include="include\Camera.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\VertexArrayInitializer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -921,6 +924,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="include\glm\glm.cppm">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexArrayInitializer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1339,5 +1345,6 @@
     <None Include="include\glm\gtx\wrap.inl">
       <Filter>Fichiers d%27en-tête</Filter>
     </None>
+    <None Include="shaders\lightShader.fs" />
   </ItemGroup>
 </Project>

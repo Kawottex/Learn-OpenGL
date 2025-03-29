@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <VertexArrayInitializer.h>
 
 Camera camera;
 
@@ -16,6 +17,8 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -71,7 +74,7 @@ GLFWwindow* initGLFWWindow()
 	return window;
 }
 
-void processInput(GLFWwindow* window, float& mixPercentage)
+void processInput(GLFWwindow* window)
 {
 	const float cameraSpeed = 2.5f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -96,83 +99,14 @@ void processInput(GLFWwindow* window, float& mixPercentage)
 	}
 }
 
-unsigned int setupVBO(const float* vertices, unsigned int size)
+void setMVPMatrix(const glm::mat4& model, Shader& shader)
 {
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
-	return VBO;
-}
+	glm::mat4 view = camera.GetViewMatrix();
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
 
-unsigned int setupEBO(const unsigned int* indices, unsigned int size)
-{
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
-	return EBO;
-}
-
-int setupTriangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
-{
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
-	setupVBO(vertices, ver_size);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	return 0;
-}
-
-int setupRectangleVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
-{
-	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3, // second triangle
-	};
-
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
-	setupVBO(vertices, ver_size);
-	setupEBO(indices, sizeof(indices));
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-	return 0;
-}
-
-int setupCubeVAO(unsigned int& VAO, float* vertices, unsigned int ver_size)
-{
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
-	setupVBO(vertices, ver_size);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// texture coord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	return 0;
+	shader.SetMat4("model", model);
+	shader.SetMat4("view", view);
+	shader.SetMat4("projection", projection);
 }
 
 void drawTriangle(unsigned int VAO)
@@ -187,25 +121,25 @@ void drawRectangle(unsigned int VAO)
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void setMVPMatrix(Shader& shader)
-{
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.f);
-
-	shader.SetMat4("model", model);
-	shader.SetMat4("view", view);
-	shader.SetMat4("projection", projection);
-}
-
 void drawCube(unsigned int VAO, Shader& shader)
 {
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+
 	glBindVertexArray(VAO);
-	setMVPMatrix(shader);
+	setMVPMatrix(model, shader);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void drawLightCube(unsigned int VAO, Shader& shader)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, lightPos);
+	model = glm::scale(model, glm::vec3(0.2f));
+
+	glBindVertexArray(VAO);
+	setMVPMatrix(model, shader);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
@@ -266,75 +200,6 @@ unsigned int setupTexture(const char* filename, GLenum texIndex, GLint texFormat
 	return texture;
 }
 
-void setupTriangle(unsigned int& VAO)
-{
-	float vertices[] = {
-		// positions		// colors
-		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
-	};
-
-	setupTriangleVAO(VAO, vertices, sizeof(vertices));
-}
-
-void setupRectangle(unsigned int& VAO)
-{
-	float vertices[] = {
-		// positions		// colors			// texture coords
-		 0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f, 1.0f, 1.0f,	// top right
-		 0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f, 1.0f, 0.0f,	// bottom right
-		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,	// bottom left
-		-0.5f,  0.5f, 0.0f,	1.0f, 1.0f, 0.0f, 0.0f, 1.0f	// top left
-	};
-
-	setupRectangleVAO(VAO, vertices, sizeof(vertices));
-}
-
-void setupCube(unsigned int& VAO)
-{
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f
-	};
-
-	setupCubeVAO(VAO, vertices, sizeof(vertices));
-}
-
 void updateDeltaTime()
 {
 	float currentFrame = glfwGetTime();
@@ -345,53 +210,40 @@ void updateDeltaTime()
 void mainLoop(GLFWwindow* window)
 {
 	unsigned int VAO;
+	unsigned int lightVAO;
 	float mixPercentage = 0.2f;
 
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	//setupTriangle(VAO);
-	//setupRectangle(VAO);
-	setupCube(VAO);
+	VertexArrayInitializer vaInit;
+	vaInit.SetupCube(VAO);
+	vaInit.SetupCube(lightVAO);
 
-	setupTexture(".\\resources\\textures\\container.jpg", GL_TEXTURE0, GL_RGB);
-	setupTexture(".\\resources\\textures\\awesomeface.png", GL_TEXTURE1, GL_RGBA);
+	//setupTexture(".\\resources\\textures\\container.jpg", GL_TEXTURE0, GL_RGB);
+	//setupTexture(".\\resources\\textures\\awesomeface.png", GL_TEXTURE1, GL_RGBA);
 
 	Shader shader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
 	shader.Use();
-	shader.SetInt("texture1", 0);
-	shader.SetInt("texture2", 1);
+	shader.SetVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+	shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+	Shader lightShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
 
 	glEnable(GL_DEPTH_TEST);
-
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, 5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f, 3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f, 2.0f, -2.5f),
-		glm::vec3(1.5f, 0.2f, -1.5f),
-		glm::vec3(-1.3f, 1.0f, -1.5f)
-	};
-
 
 	while (!glfwWindowShouldClose(window))
 	{
 		updateDeltaTime();
-		processInput(window, mixPercentage);
+		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//double timeValue = glfwGetTime();
-
 		shader.Use();
-		shader.SetFloat("mixPercentage", mixPercentage);
+		drawCube(VAO, shader);
 
-		//drawCube(VAO, shader);
-		drawCubeArray(VAO, shader, cubePositions);
+		lightShader.Use();
+		drawLightCube(lightVAO, lightShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
