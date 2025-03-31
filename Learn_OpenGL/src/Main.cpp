@@ -124,11 +124,11 @@ void drawRectangle(unsigned int VAO)
 void drawCube(unsigned int VAO, Shader& shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+	//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	//model = glm::rotate(model, glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
-	glBindVertexArray(VAO);
 	setMVPMatrix(model, shader);
+	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
@@ -138,8 +138,8 @@ void drawLightCube(unsigned int VAO, Shader& shader)
 	model = glm::translate(model, lightPos);
 	model = glm::scale(model, glm::vec3(0.2f));
 
-	glBindVertexArray(VAO);
 	setMVPMatrix(model, shader);
+	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
@@ -226,6 +226,7 @@ void mainLoop(GLFWwindow* window)
 	shader.Use();
 	shader.SetVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
 	shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	shader.SetVec3("lightPos", lightPos);
 
 	Shader lightShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
 
@@ -240,6 +241,7 @@ void mainLoop(GLFWwindow* window)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader.Use();
+		shader.SetVec3("viewPos", camera.Position);
 		drawCube(VAO, shader);
 
 		lightShader.Use();
