@@ -19,6 +19,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+bool xDirection = true;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -124,7 +125,7 @@ void drawRectangle(unsigned int VAO)
 void drawCube(unsigned int VAO, Shader& shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 	//model = glm::rotate(model, glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
 	setMVPMatrix(model, shader);
@@ -158,29 +159,18 @@ void drawCubeArray(unsigned int VAO, Shader& shader, glm::vec3 cubePositions[])
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
 
-		float angle = glm::radians(10.0f * i);
-		if (i % 3 == 0)
-		{
-			angle *= (float)glfwGetTime();
-		}
+		float angle = glm::radians(20.0f * i);
 		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3, 0.5f));
 		shader.SetMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 }
 
-unsigned int setupTexture(const char* filename, GLenum texIndex, GLint texFormat)
+unsigned int loadTexture(const char* filename)
 {
 	unsigned int texture;
 
 	glGenTextures(1, &texture);
-	glActiveTexture(texIndex);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	stbi_set_flip_vertically_on_load(true);
 
@@ -189,14 +179,29 @@ unsigned int setupTexture(const char* filename, GLenum texIndex, GLint texFormat
 
 	if (data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, width, height, 0, texFormat, GL_UNSIGNED_BYTE, data);
+		GLenum format = GL_RGBA;
+		if (nrChannels == 1)
+			format = GL_RED;
+		else if (nrChannels == 3)
+			format = GL_RGB;
+		else if (nrChannels == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
 	}
 	else
 	{
 		std::cout << "Failed to load texture" << std::endl;
 	}
-	stbi_image_free(data);
 	return texture;
 }
 
@@ -219,16 +224,37 @@ void mainLoop(GLFWwindow* window)
 	vaInit.SetupCube(VAO);
 	vaInit.SetupCube(lightVAO);
 
-	//setupTexture(".\\resources\\textures\\container.jpg", GL_TEXTURE0, GL_RGB);
-	//setupTexture(".\\resources\\textures\\awesomeface.png", GL_TEXTURE1, GL_RGBA);
+	unsigned int diffuseMap = loadTexture(".\\resources\\textures\\container2.png");
+	unsigned int specularMap = loadTexture(".\\resources\\textures\\container2_specular.png");
 
-	Shader shader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
-	shader.Use();
-	shader.SetVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-	shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-	shader.SetVec3("lightPos", lightPos);
+	Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	cubeShader.Use();
+	cubeShader.SetInt("material.diffuse", 0);
+	cubeShader.SetInt("material.specular", 1);
+	cubeShader.SetFloat("material.shininess", 0.25f * 128.0f);
 
-	Shader lightShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
+	cubeShader.SetVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+	cubeShader.SetVec3("light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+	cubeShader.SetVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+	cubeShader.SetFloat("light.constant", 1.0f);
+	cubeShader.SetFloat("light.linear", 0.09f);
+	cubeShader.SetFloat("light.quadratic", 0.032f);
+	//cubeShader.SetVec3("light.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+
+	Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
+
+	glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -237,15 +263,25 @@ void mainLoop(GLFWwindow* window)
 		updateDeltaTime();
 		processInput(window);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shader.Use();
-		shader.SetVec3("viewPos", camera.Position);
-		drawCube(VAO, shader);
+		cubeShader.Use();
+		cubeShader.SetVec3("viewPos", camera.Position);
+		cubeShader.SetVec3("light.position", camera.Position);
+		cubeShader.SetVec3("light.direction", camera.Front);
+		cubeShader.SetFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
 
-		lightShader.Use();
-		drawLightCube(lightVAO, lightShader);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, diffuseMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, specularMap);
+		//drawCube(VAO, cubeShader);
+		drawCubeArray(VAO, cubeShader, cubePositions);
+
+		lightSourceShader.Use();
+		lightSourceShader.SetVec3("objectColor", glm::vec3(1.0f, 1.0f, 1.0f));
+		drawLightCube(lightVAO, lightSourceShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

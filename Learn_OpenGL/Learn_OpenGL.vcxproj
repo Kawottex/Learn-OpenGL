@@ -578,6 +578,12 @@
     <None Include="include\glm\gtx\wrap.inl" />
     <None Include="shaders\lightShader.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\textures\container2.png" />
+    <Image Include="resources\textures\container2_specular.png" />
+    <Image Include="resources\textures\lighting_maps_specular_color.png" />
+    <Image Include="resources\textures\matrix.jpg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1347,4 +1347,18 @@
     </None>
     <None Include="shaders\lightShader.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\textures\container2.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\container2_specular.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\lighting_maps_specular_color.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\matrix.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
