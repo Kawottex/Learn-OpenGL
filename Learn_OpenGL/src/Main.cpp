@@ -18,7 +18,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 bool xDirection = true;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -133,7 +132,7 @@ void drawCube(unsigned int VAO, Shader& shader)
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void drawLightCube(unsigned int VAO, Shader& shader)
+void drawLightCube(unsigned int VAO, Shader& shader, glm::vec3 lightPos)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, lightPos);
@@ -212,6 +211,55 @@ void updateDeltaTime()
 	lastFrame = currentFrame;
 }
 
+void setupMaterial(Shader& shader)
+{
+	shader.Use();
+	shader.SetInt("material.diffuse", 0);
+	shader.SetInt("material.specular", 1);
+	shader.SetFloat("material.shininess", 0.25f * 128.0f);
+}
+
+void setupDirectionalLight(Shader& shader)
+{
+	shader.Use();
+	shader.SetVec3("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+	shader.SetVec3("dirLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+	shader.SetVec3("dirLight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+	shader.SetVec3("dirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+}
+
+void setupPointLights(Shader& shader, glm::vec3* pointLightPositions)
+{
+	shader.Use();
+	for (int i = 0; i < 4; i++)
+	{
+		std::string indexStr = std::to_string(i);
+		shader.SetVec3("pointLights[" + indexStr + "].position", pointLightPositions[i]);
+	
+		shader.SetVec3("pointLights[" + indexStr + "].ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+		shader.SetVec3("pointLights[" + indexStr + "].diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+		shader.SetVec3("pointLights[" + indexStr + "].specular", glm::vec3(1.0f, 1.0f, 1.0f));
+	
+		shader.SetFloat("pointLights[" + indexStr + "].constant", 1.0f);
+		shader.SetFloat("pointLights[" + indexStr + "].linear", 0.09f);
+		shader.SetFloat("pointLights[" + indexStr + "].quadratic", 0.032f);
+	}
+}
+
+void updateSpotLight(Shader& shader)
+{
+	shader.Use();
+	shader.SetVec3("spotLight.position", camera.Position);
+	shader.SetVec3("spotLight.direction", camera.Front);
+
+	shader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+	shader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
+
+	shader.SetVec3("spotLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+	shader.SetVec3("spotLight.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+	shader.SetVec3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+}
+
 void mainLoop(GLFWwindow* window)
 {
 	unsigned int VAO;
@@ -227,34 +275,33 @@ void mainLoop(GLFWwindow* window)
 	unsigned int diffuseMap = loadTexture(".\\resources\\textures\\container2.png");
 	unsigned int specularMap = loadTexture(".\\resources\\textures\\container2_specular.png");
 
-	Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
-	cubeShader.Use();
-	cubeShader.SetInt("material.diffuse", 0);
-	cubeShader.SetInt("material.specular", 1);
-	cubeShader.SetFloat("material.shininess", 0.25f * 128.0f);
-
-	cubeShader.SetVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-	cubeShader.SetVec3("light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-	cubeShader.SetVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-	cubeShader.SetFloat("light.constant", 1.0f);
-	cubeShader.SetFloat("light.linear", 0.09f);
-	cubeShader.SetFloat("light.quadratic", 0.032f);
-	//cubeShader.SetVec3("light.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-
-	Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f, 0.2f, 2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f, 2.0f, -12.0f),
+		glm::vec3(0.0f, 0.0f, -3.0f)
+	};
 
 	glm::vec3 cubePositions[] = {
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(2.0f,  5.0f, -15.0f),
-	glm::vec3(-1.5f, -2.2f, -2.5f),
-	glm::vec3(-3.8f, -2.0f, -12.3f),
-	glm::vec3(2.4f, -0.4f, -3.5f),
-	glm::vec3(-1.7f,  3.0f, -7.5f),
-	glm::vec3(1.3f, -2.0f, -2.5f),
-	glm::vec3(1.5f,  2.0f, -2.5f),
-	glm::vec3(1.5f,  0.2f, -1.5f),
-	glm::vec3(-1.3f,  1.0f, -1.5f)
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
+
+
+	Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
+	Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+
+	setupMaterial(cubeShader);
+	setupDirectionalLight(cubeShader);
+	setupPointLights(cubeShader, pointLightPositions);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -268,21 +315,20 @@ void mainLoop(GLFWwindow* window)
 
 		cubeShader.Use();
 		cubeShader.SetVec3("viewPos", camera.Position);
-		cubeShader.SetVec3("light.position", camera.Position);
-		cubeShader.SetVec3("light.direction", camera.Front);
-		cubeShader.SetFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		updateSpotLight(cubeShader);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
-		//drawCube(VAO, cubeShader);
 		drawCubeArray(VAO, cubeShader, cubePositions);
 
 		lightSourceShader.Use();
 		lightSourceShader.SetVec3("objectColor", glm::vec3(1.0f, 1.0f, 1.0f));
-		drawLightCube(lightVAO, lightSourceShader);
-
+		for (int i = 0; i < 4; i++)
+		{
+			drawLightCube(lightVAO, lightSourceShader, pointLightPositions[i]);
+		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
