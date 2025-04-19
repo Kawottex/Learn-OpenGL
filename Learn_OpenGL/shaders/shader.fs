@@ -40,15 +40,6 @@ struct SpotLight {
     vec3 specular;
 };
 
-struct Light {
-    //vec3 position;
-    vec3 direction;
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
 #define NR_POINT_LIGHTS 4
 
 in vec3 Normal;
@@ -61,7 +52,6 @@ uniform Material material;
 uniform DirLight dirLight;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform SpotLight spotLight;
-uniform Light light;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <Shader.h>
 #include <Camera.h>
+#include <Model.h>
 #include <stb_image.h>
 
 #include <glm/glm.hpp>
@@ -298,12 +299,16 @@ void mainLoop(GLFWwindow* window)
 
 	Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
 	Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	Shader modelShader(".\\shaders\\shader.vs", ".\\shaders\\model_loading.fs");
 
 	setupMaterial(cubeShader);
 	setupDirectionalLight(cubeShader);
 	setupPointLights(cubeShader, pointLightPositions);
 
 	glEnable(GL_DEPTH_TEST);
+
+	std::string backpackPath = ".\\resources\\models\\backpack\\backpack.obj";
+	Model backpackModel(backpackPath.c_str());
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -329,6 +334,9 @@ void mainLoop(GLFWwindow* window)
 		{
 			drawLightCube(lightVAO, lightSourceShader, pointLightPositions[i]);
 		}
+
+		backpackModel.Draw(modelShader);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

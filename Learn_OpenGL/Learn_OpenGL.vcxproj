@@ -152,6 +152,7 @@
     <ClInclude Include="include\assimp\Compiler\poppack1.h" />
     <ClInclude Include="include\assimp\Compiler\pstdint.h" />
     <ClInclude Include="include\assimp\Compiler\pushpack1.h" />
+    <ClInclude Include="include\assimp\config.h" />
     <ClInclude Include="include\assimp\CreateAnimMesh.h" />
     <ClInclude Include="include\assimp\DefaultIOStream.h" />
     <ClInclude Include="include\assimp\DefaultIOSystem.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="include\assimp\qnan.h" />
     <ClInclude Include="include\assimp\quaternion.h" />
     <ClInclude Include="include\assimp\RemoveComments.h" />
+    <ClInclude Include="include\assimp\revision.h" />
     <ClInclude Include="include\assimp\scene.h" />
     <ClInclude Include="include\assimp\SceneCombiner.h" />
     <ClInclude Include="include\assimp\SGSpatialSort.h" />
@@ -524,6 +526,7 @@
     <ClCompile Include="src\VertexArrayInitializer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assimp-vc143-mtd.dll" />
     <None Include="include\assimp\color4.inl" />
     <None Include="include\assimp\material.inl" />
     <None Include="include\assimp\matrix3x3.inl" />
@@ -671,12 +674,19 @@
     <None Include="include\glm\gtx\vector_query.inl" />
     <None Include="include\glm\gtx\wrap.inl" />
     <None Include="shaders\lightShader.fs" />
+    <None Include="shaders\model_loading.fs" />
+    <None Include="shaders\shader.fs" />
+    <None Include="shaders\shader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png" />
     <Image Include="resources\textures\container2_specular.png" />
     <Image Include="resources\textures\lighting_maps_specular_color.png" />
     <Image Include="resources\textures\matrix.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\assimp-vc143-mtd.lib" />
+    <Library Include="lib\glfw3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

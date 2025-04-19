@@ -1158,6 +1158,12 @@
     <ClInclude Include="include\Model.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\assimp\config.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assimp\revision.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1628,6 +1634,10 @@
     <None Include="include\assimp\vector3.inl">
       <Filter>Fichiers d%27en-tête</Filter>
     </None>
+    <None Include="assimp-vc143-mtd.dll" />
+    <None Include="shaders\shader.fs" />
+    <None Include="shaders\shader.vs" />
+    <None Include="shaders\model_loading.fs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png">
@@ -1642,5 +1652,9 @@
     <Image Include="resources\textures\matrix.jpg">
       <Filter>Fichiers de ressources</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\assimp-vc143-mtd.lib" />
+    <Library Include="lib\glfw3.lib" />
   </ItemGroup>
 </Project>
