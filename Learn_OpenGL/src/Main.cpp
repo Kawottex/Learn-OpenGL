@@ -172,8 +172,6 @@ unsigned int loadTexture(const char* filename)
 
 	glGenTextures(1, &texture);
 
-	stbi_set_flip_vertically_on_load(true);
-
 	int width, height, nrChannels;
 	unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
 
@@ -269,12 +267,12 @@ void mainLoop(GLFWwindow* window)
 
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	VertexArrayInitializer vaInit;
-	vaInit.SetupCube(VAO);
-	vaInit.SetupCube(lightVAO);
+	//VertexArrayInitializer vaInit;
+	//vaInit.SetupCube(VAO);
+	//vaInit.SetupCube(lightVAO);
 
-	unsigned int diffuseMap = loadTexture(".\\resources\\textures\\container2.png");
-	unsigned int specularMap = loadTexture(".\\resources\\textures\\container2_specular.png");
+	//unsigned int diffuseMap = loadTexture(".\\resources\\textures\\container2.png");
+	//unsigned int specularMap = loadTexture(".\\resources\\textures\\container2_specular.png");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(0.7f, 0.2f, 2.0f),
@@ -297,14 +295,17 @@ void mainLoop(GLFWwindow* window)
 	};
 
 
-	Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
-	Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
-	Shader modelShader(".\\shaders\\shader.vs", ".\\shaders\\model_loading.fs");
+	//Shader lightSourceShader(".\\shaders\\shader.vs", ".\\shaders\\lightShader.fs");
+	//Shader cubeShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	Shader modelShader(".\\shaders\\shader.vs", ".\\shaders\\shader.fs");
+	modelShader.Use();
+	modelShader.SetFloat("material.shininess", 0.25f * 128.0f);
 
-	setupMaterial(cubeShader);
-	setupDirectionalLight(cubeShader);
-	setupPointLights(cubeShader, pointLightPositions);
+	//setupMaterial(cubeShader);
+	setupDirectionalLight(modelShader);
+	setupPointLights(modelShader, pointLightPositions);
 
+	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 
 	std::string backpackPath = ".\\resources\\models\\backpack\\backpack.obj";
@@ -318,22 +319,30 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		cubeShader.Use();
-		cubeShader.SetVec3("viewPos", camera.Position);
-		updateSpotLight(cubeShader);
+		//cubeShader.Use();
+		//cubeShader.SetVec3("viewPos", camera.Position);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-		drawCubeArray(VAO, cubeShader, cubePositions);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, diffuseMap);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, specularMap);
+		//drawCubeArray(VAO, cubeShader, cubePositions);
 
-		lightSourceShader.Use();
-		lightSourceShader.SetVec3("objectColor", glm::vec3(1.0f, 1.0f, 1.0f));
-		for (int i = 0; i < 4; i++)
-		{
-			drawLightCube(lightVAO, lightSourceShader, pointLightPositions[i]);
-		}
+		//lightSourceShader.Use();
+		//lightSourceShader.SetVec3("objectColor", glm::vec3(1.0f, 1.0f, 1.0f));
+		//for (int i = 0; i < 4; i++)
+		//{
+		//	drawLightCube(lightVAO, lightSourceShader, pointLightPositions[i]);
+		//}
+
+		modelShader.Use();
+		updateSpotLight(modelShader);
+		modelShader.SetVec3("viewPos", camera.Position);
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		setMVPMatrix(model, modelShader);
 
 		backpackModel.Draw(modelShader);
 
