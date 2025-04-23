@@ -1638,6 +1638,9 @@
     <None Include="shaders\shader.fs" />
     <None Include="shaders\shader.vs" />
     <None Include="shaders\model_loading.fs" />
+    <None Include="shaders\depth_testing.fs" />
+    <None Include="shaders\depth_testing.vs" />
+    <None Include="shaders\shaderSingleColor.fs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png">
