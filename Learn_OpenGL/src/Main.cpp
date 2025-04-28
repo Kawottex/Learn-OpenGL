@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <map>
 #include <Shader.h>
 #include <Camera.h>
 #include <Model.h>
@@ -116,6 +117,31 @@ void updateDeltaTime()
 	float currentFrame = glfwGetTime();
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
+}
+
+void setupQuad(unsigned int& quadVAO, unsigned int& quadVBO)
+{
+	float vertices[] = {
+		// positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+		0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+		1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+	};
+
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindVertexArray(0);
 }
 
 void setupCube(unsigned int& cubeVAO, unsigned int& cubeVBO)
@@ -257,19 +283,47 @@ void drawCubesBorder(Shader& shader, unsigned int cubeVAO)
 	glEnable(GL_DEPTH_TEST);
 }
 
+void drawQuadArray(Shader& shader, unsigned int quadVAO, unsigned int texture, const vector<glm::vec3>& quadArray)
+{
+	std::map<float, glm::vec3> sorted;
+	for (unsigned int i = 0; i < quadArray.size(); i++)
+	{
+		float distance = glm::length(camera.Position - quadArray[i]);
+		sorted[distance] = quadArray[i];
+	}
+
+	shader.Use();
+
+	glBindVertexArray(quadVAO);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glm::mat4 model = glm::mat4(1.0f);
+	for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it !=
+		sorted.rend(); ++it)
+	{
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, it->second);
+		shader.SetMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+}
+
 void mainLoop(GLFWwindow* window)
 {
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO;
+	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO, quadArrayVAO, quadArrayVBO;
 
 	setupCube(cubeVAO, cubeVBO);
 	setupPlane(planeVAO, planeVBO);
+	setupQuad(quadArrayVAO, quadArrayVBO);
 
 	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
 	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
 	unsigned int cubeTexture = Model::TextureFromFile("marble.jpg", ".\\resources\\textures");
 	unsigned int floorTexture = Model::TextureFromFile("metal.png", ".\\resources\\textures");
+	unsigned int vegetationTexture = Model::TextureFromFile("grass.png", ".\\resources\\textures");
+	unsigned int windowTexture = Model::TextureFromFile("blending_transparent_window.png", ".\\resources\\textures");
 
 	shader.Use();
 	shader.SetInt("texture1", 0);
@@ -277,6 +331,16 @@ void mainLoop(GLFWwindow* window)
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	vector<glm::vec3> quadArrayPos;
+	quadArrayPos.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
+	quadArrayPos.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
+	quadArrayPos.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
+	quadArrayPos.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
+	quadArrayPos.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -296,6 +360,7 @@ void mainLoop(GLFWwindow* window)
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
 		drawCubesBorder(borderShader, cubeVAO);
+		drawQuadArray(shader, quadArrayVAO, windowTexture, quadArrayPos);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

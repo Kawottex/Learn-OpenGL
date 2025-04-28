@@ -682,8 +682,10 @@
     <None Include="shaders\shaderSingleColor.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\textures\blending_transparent_window.png" />
     <Image Include="resources\textures\container2.png" />
     <Image Include="resources\textures\container2_specular.png" />
+    <Image Include="resources\textures\grass.png" />
     <Image Include="resources\textures\lighting_maps_specular_color.png" />
     <Image Include="resources\textures\matrix.jpg" />
   </ItemGroup>
