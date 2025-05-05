@@ -101,9 +101,19 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-void setMVPMatrix(const glm::mat4& model, Shader& shader)
+void setMVPMatrix(const glm::mat4& model, Shader& shader, bool bInvertCamera = false)
 {
-	glm::mat4 view = camera.GetViewMatrix();
+	glm::mat4 view = glm::mat4();
+	if (bInvertCamera)
+	{
+		camera.Front *= -1;
+		view = camera.GetViewMatrix();
+		camera.Front *= -1;
+	}
+	else
+	{
+		view = camera.GetViewMatrix();
+	}
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
 
 	shader.Use();
@@ -119,7 +129,38 @@ void updateDeltaTime()
 	lastFrame = currentFrame;
 }
 
-void setupTextureQuad(unsigned int& quadVAO, unsigned int& quadVBO)
+void setupVertex(float* vertices, int vertSize, int posCount, int texCount, unsigned int& VAO, unsigned int& VBO)
+{
+	int posTexCount = posCount + texCount;
+
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertSize, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, posCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, texCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)(posCount * sizeof(float)));
+	glBindVertexArray(0);
+}
+
+void setupMirrorQuad(unsigned int& VAO, unsigned int& VBO)
+{
+	float quadVertices[] = {
+		// positions // texCoords
+		-1.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 1.0f
+	};
+
+	setupVertex(quadVertices, sizeof(quadVertices), 2, 2, VAO, VBO);
+}
+
+void setupScreenQuad(unsigned int& VAO, unsigned int& VBO)
 {
 	float quadVertices[] = {
 		// positions // texCoords
@@ -131,19 +172,10 @@ void setupTextureQuad(unsigned int& quadVAO, unsigned int& quadVBO)
 		1.0f, 1.0f, 1.0f, 1.0f
 	};
 
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindVertexArray(0);
+	setupVertex(quadVertices, sizeof(quadVertices), 2, 2, VAO, VBO);
 }
 
-void setupQuad(unsigned int& quadVAO, unsigned int& quadVBO)
+void setupQuad(unsigned int& VAO, unsigned int& VBO)
 {
 	float vertices[] = {
 		// positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
@@ -155,20 +187,10 @@ void setupQuad(unsigned int& quadVAO, unsigned int& quadVBO)
 		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
 		1.0f,  0.5f,  0.0f,  1.0f,  0.0f
 	};
-
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
+	setupVertex(vertices, sizeof(vertices), 3, 2, VAO, VBO);
 }
 
-void setupCube(unsigned int& cubeVAO, unsigned int& cubeVBO)
+void setupCube(unsigned int& VAO, unsigned int& VBO)
 {
 	float cubeVertices[] = {
 		// back face
@@ -215,19 +237,10 @@ void setupCube(unsigned int& cubeVAO, unsigned int& cubeVBO)
 		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f // bottom-left
 	};
 
-	glGenVertexArrays(1, &cubeVAO);
-	glGenBuffers(1, &cubeVBO);
-	glBindVertexArray(cubeVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
+	setupVertex(cubeVertices, sizeof(cubeVertices), 3, 2, VAO, VBO);
 }
 
-void setupPlane(unsigned int& planeVAO, unsigned int& planeVBO)
+void setupPlane(unsigned int& VAO, unsigned int& VBO)
 {
 	float planeVertices[] = {
 		// positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
@@ -240,16 +253,7 @@ void setupPlane(unsigned int& planeVAO, unsigned int& planeVBO)
 		 5.0f, -0.5f, -5.0f,  2.0f, 2.0f
 	};
 
-	glGenVertexArrays(1, &planeVAO);
-	glGenBuffers(1, &planeVBO);
-	glBindVertexArray(planeVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), &planeVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
+	setupVertex(planeVertices, sizeof(planeVertices), 3, 2, VAO, VBO);
 }
 
 void drawFloor(Shader& shader, unsigned int planeVAO, unsigned int floorTexture)
@@ -332,6 +336,15 @@ void drawQuadArray(Shader& shader, unsigned int quadVAO, unsigned int texture, c
 	}
 }
 
+void drawScreenQuad(Shader& shader, unsigned int quadVAO, unsigned int texture)
+{
+	shader.Use();
+	glBindVertexArray(quadVAO);
+	glDisable(GL_DEPTH_TEST);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 void setupFramebuffer(unsigned int &fbo, unsigned int& texColorBuffer)
 {
 	glGenFramebuffers(1, &fbo);
@@ -370,12 +383,13 @@ void mainLoop(GLFWwindow* window)
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO;
-	unsigned int texQuadVAO, texQuadVBO;
+	unsigned int screenQuadVAO, screenQuadVBO, mirrorQuadVAO, mirrorQuadVBO;
 
 	setupCube(cubeVAO, cubeVBO);
 	setupPlane(planeVAO, planeVBO);
 	setupQuad(quadVAO, quadVBO);
-	setupTextureQuad(texQuadVAO, texQuadVBO);
+	setupScreenQuad(screenQuadVAO, screenQuadVBO);
+	setupMirrorQuad(mirrorQuadVAO, mirrorQuadVBO);
 
 	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
 	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
@@ -405,7 +419,10 @@ void mainLoop(GLFWwindow* window)
 	quadArrayPos.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
 
 	unsigned int framebuffer, texColorBuffer;
+	unsigned int mirrorBuffer, texMirrorBuffer;
+
 	setupFramebuffer(framebuffer, texColorBuffer);
+	setupFramebuffer(mirrorBuffer, texMirrorBuffer);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -417,7 +434,7 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		// first pass
+		// Setup scene framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -427,22 +444,31 @@ void mainLoop(GLFWwindow* window)
 		glm::mat4 model = glm::mat4(1.0f);
 		setMVPMatrix(model, shader);
 		setMVPMatrix(model, borderShader);
-
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
 		//drawCubesBorder(borderShader, cubeVAO);
 		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
 
-		// second pass
+		// Setup mirror framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, mirrorBuffer);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		
+		// Draw mirrored scene in framebuffer
+		model = glm::mat4(1.0f);
+		setMVPMatrix(model, shader, true);
+		drawFloor(shader, planeVAO, floorTexture);
+		drawCubes(shader, cubeVAO, cubeTexture);
+		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
+
+		// Draw screen quads
 		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		screenShader.Use();
-		glBindVertexArray(texQuadVAO);
-		glDisable(GL_DEPTH_TEST);
-		glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
+		drawScreenQuad(screenShader, mirrorQuadVAO, texMirrorBuffer);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
