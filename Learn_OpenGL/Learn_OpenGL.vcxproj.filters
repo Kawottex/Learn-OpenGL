@@ -1642,6 +1642,8 @@
     <None Include="shaders\depth_testing.vs" />
     <None Include="shaders\shaderSingleColor.fs" />
     <None Include="shaders\screenShader.vs" />
+    <None Include="shaders\skyboxShader.fs" />
+    <None Include="shaders\skyboxShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png">
@@ -1660,6 +1662,24 @@
       <Filter>Fichiers de ressources</Filter>
     </Image>
     <Image Include="resources\textures\blending_transparent_window.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\back.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\bottom.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\front.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\left.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\right.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\top.jpg">
       <Filter>Fichiers de ressources</Filter>
     </Image>
   </ItemGroup>

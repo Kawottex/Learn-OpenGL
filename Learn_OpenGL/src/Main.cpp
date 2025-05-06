@@ -101,21 +101,27 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-void setMVPMatrix(const glm::mat4& model, Shader& shader, bool bInvertCamera = false)
+glm::mat4 GetPerspectiveProj()
 {
-	glm::mat4 view = glm::mat4();
-	if (bInvertCamera)
-	{
-		camera.Front *= -1;
-		view = camera.GetViewMatrix();
-		camera.Front *= -1;
-	}
-	else
-	{
-		view = camera.GetViewMatrix();
-	}
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
+	return glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
+}
 
+glm::mat4 GetInvertedView()
+{
+	camera.Front *= -1;
+	glm::mat4 view = camera.GetViewMatrix();
+	camera.Front *= -1;
+	return view;
+}
+
+glm::mat4 GetViewNoTranslate()
+{
+	glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+	return view;
+}
+
+void setMVPMatrix(Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection)
+{
 	shader.Use();
 	shader.SetMat4("model", model);
 	shader.SetMat4("view", view);
@@ -140,8 +146,13 @@ void setupVertex(float* vertices, int vertSize, int posCount, int texCount, unsi
 	glBufferData(GL_ARRAY_BUFFER, vertSize, vertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, posCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, texCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)(posCount * sizeof(float)));
+
+	if (texCount > 0)
+	{
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, texCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)(posCount * sizeof(float)));
+	}
+
 	glBindVertexArray(0);
 }
 
@@ -238,6 +249,56 @@ void setupCube(unsigned int& VAO, unsigned int& VBO)
 	};
 
 	setupVertex(cubeVertices, sizeof(cubeVertices), 3, 2, VAO, VBO);
+}
+
+void setupCubeNoTexture(unsigned int& VAO, unsigned int& VBO)
+{
+	float cubeVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	setupVertex(cubeVertices, sizeof(cubeVertices), 3, 0, VAO, VBO);
 }
 
 void setupPlane(unsigned int& VAO, unsigned int& VBO)
@@ -378,7 +439,39 @@ void setupFramebuffer(unsigned int &fbo, unsigned int& texColorBuffer)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void mainLoop(GLFWwindow* window)
+unsigned int loadCubemap(const vector<string>& faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	unsigned char* data;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width,
+				height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		}
+		else
+		{
+			std::cout << "Cubemap failed to load at path: " << faces[i] << std::endl;
+		}
+		stbi_image_free(data);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	
+	return textureID;
+}
+
+void rearViewLoop(GLFWwindow* window)
 {
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -397,19 +490,14 @@ void mainLoop(GLFWwindow* window)
 
 	unsigned int cubeTexture = Model::TextureFromFile("marble.jpg", ".\\resources\\textures");
 	unsigned int floorTexture = Model::TextureFromFile("metal.png", ".\\resources\\textures");
-	unsigned int vegetationTexture = Model::TextureFromFile("grass.png", ".\\resources\\textures");
 	unsigned int windowTexture = Model::TextureFromFile("blending_transparent_window.png", ".\\resources\\textures");
 
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
-	//glFrontFace(GL_CCW);
 
 	vector<glm::vec3> quadArrayPos;
 	quadArrayPos.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
@@ -442,11 +530,10 @@ void mainLoop(GLFWwindow* window)
 
 		// Draw scene in framebuffer
 		glm::mat4 model = glm::mat4(1.0f);
-		setMVPMatrix(model, shader);
-		setMVPMatrix(model, borderShader);
+		setMVPMatrix(shader, model, camera.GetViewMatrix(), GetPerspectiveProj());
+		setMVPMatrix(borderShader, model, camera.GetViewMatrix(), GetPerspectiveProj());
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
-		//drawCubesBorder(borderShader, cubeVAO);
 		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
 
 		// Setup mirror framebuffer
@@ -454,10 +541,10 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
-		
+
 		// Draw mirrored scene in framebuffer
 		model = glm::mat4(1.0f);
-		setMVPMatrix(model, shader, true);
+		setMVPMatrix(shader, model, GetInvertedView(), GetPerspectiveProj());
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
 		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
@@ -469,7 +556,137 @@ void mainLoop(GLFWwindow* window)
 
 		drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
 		drawScreenQuad(screenShader, mirrorQuadVAO, texMirrorBuffer);
-		
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glDeleteVertexArrays(1, &cubeVAO);
+	glDeleteVertexArrays(1, &planeVAO);
+	glDeleteBuffers(1, &cubeVBO);
+	glDeleteBuffers(1, &planeVBO);
+}
+
+vector<std::string> getSkyboxFaces()
+{
+	vector<std::string> faces
+	{
+		".\\resources\\textures\\skybox\\right.jpg",
+		".\\resources\\textures\\skybox\\left.jpg",
+		".\\resources\\textures\\skybox\\top.jpg",
+		".\\resources\\textures\\skybox\\bottom.jpg",
+		".\\resources\\textures\\skybox\\front.jpg",
+		".\\resources\\textures\\skybox\\back.jpg"
+	};
+	return faces;
+}
+
+vector<glm::vec3> getQuadArrayPos()
+{
+	vector<glm::vec3> quadArrayPos
+	{
+		glm::vec3(-1.5f, 0.0f, -0.48f),
+		glm::vec3(1.5f, 0.0f, 0.51f),
+		glm::vec3(0.0f, 0.0f, 0.7f),
+		glm::vec3(-0.3f, 0.0f, -2.3f),
+		glm::vec3(0.5f, 0.0f, -0.6f)
+	};
+	return quadArrayPos;
+}
+
+void drawSkybox(Shader& shader, unsigned int skyboxVAO, unsigned int cubemapTexture)
+{
+	glDepthFunc(GL_LEQUAL);
+	shader.Use();
+	glm::mat4 model = glm::mat4(1.0f);
+	setMVPMatrix(shader, model, GetViewNoTranslate(), GetPerspectiveProj());
+	glBindVertexArray(skyboxVAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthMask(GL_LESS);
+}
+
+void mainLoop(GLFWwindow* window)
+{
+	bool bEnableFramebuffer = false;
+
+	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO;
+	unsigned int screenQuadVAO, screenQuadVBO, skyboxVAO, skyboxVBO;
+
+	setupCube(cubeVAO, cubeVBO);
+	setupPlane(planeVAO, planeVBO);
+	setupQuad(quadVAO, quadVBO);
+	setupScreenQuad(screenQuadVAO, screenQuadVBO);
+	setupCubeNoTexture(skyboxVAO, skyboxVBO);
+
+	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
+	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
+	Shader screenShader(".\\shaders\\screenShader.vs", ".\\shaders\\screenShader.fs");
+	Shader skyboxShader(".\\shaders\\skyboxShader.vs", ".\\shaders\\skyboxShader.fs");
+
+	unsigned int cubeTexture = Model::TextureFromFile("marble.jpg", ".\\resources\\textures");
+	unsigned int floorTexture = Model::TextureFromFile("metal.png", ".\\resources\\textures");
+	unsigned int vegetationTexture = Model::TextureFromFile("grass.png", ".\\resources\\textures");
+	unsigned int windowTexture = Model::TextureFromFile("blending_transparent_window.png", ".\\resources\\textures");
+
+	vector<std::string> faces = getSkyboxFaces();
+	unsigned int cubemapTexture = loadCubemap(faces);
+
+	stbi_set_flip_vertically_on_load(true);
+	glEnable(GL_DEPTH_TEST);
+	//
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
+
+	vector<glm::vec3> quadArrayPos = getQuadArrayPos();
+
+	unsigned int framebuffer, texColorBuffer;
+	setupFramebuffer(framebuffer, texColorBuffer);
+
+	while (!glfwWindowShouldClose(window))
+	{
+		updateDeltaTime();
+		processInput(window);
+
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (bEnableFramebuffer)
+		{
+			// Setup scene framebuffer
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			glEnable(GL_DEPTH_TEST);
+		}
+
+		// Draw scene
+		glm::mat4 model = glm::mat4(1.0f);
+		setMVPMatrix(shader, model, camera.GetViewMatrix(), GetPerspectiveProj());
+		setMVPMatrix(borderShader, model, camera.GetViewMatrix(), GetPerspectiveProj());
+		drawFloor(shader, planeVAO, floorTexture);
+		drawCubes(shader, cubeVAO, cubeTexture);
+		//drawCubesBorder(borderShader, cubeVAO);
+		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
+
+		if (bEnableFramebuffer)
+		{
+			// Draw screen quads
+			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
+		}
+
+		// Skybox
+		drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
