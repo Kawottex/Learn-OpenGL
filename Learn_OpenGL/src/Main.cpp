@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <VertexArrayInitializer.h>
+#include <LightScene.h>
 
 Camera camera;
 
@@ -101,11 +102,6 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-glm::mat4 GetPerspectiveProj()
-{
-	return glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.f);
-}
-
 glm::mat4 GetInvertedView()
 {
 	camera.Front *= -1;
@@ -118,14 +114,6 @@ glm::mat4 GetViewNoTranslate()
 {
 	glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
 	return view;
-}
-
-void setMVPMatrix(Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection)
-{
-	shader.Use();
-	shader.SetMat4("model", model);
-	shader.SetMat4("view", view);
-	shader.SetMat4("projection", projection);
 }
 
 void updateDeltaTime()
@@ -154,167 +142,6 @@ void setupVertex(float* vertices, int vertSize, int posCount, int texCount, unsi
 	}
 
 	glBindVertexArray(0);
-}
-
-void setupMirrorQuad(unsigned int& VAO, unsigned int& VBO)
-{
-	float quadVertices[] = {
-		// positions // texCoords
-		-1.0f, 1.0f, 0.0f, 1.0f,
-		-1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 1.0f, 1.0f
-	};
-
-	setupVertex(quadVertices, sizeof(quadVertices), 2, 2, VAO, VBO);
-}
-
-void setupScreenQuad(unsigned int& VAO, unsigned int& VBO)
-{
-	float quadVertices[] = {
-		// positions // texCoords
-		-1.0f, 1.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f,
-		1.0f, -1.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, -1.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 1.0f, 1.0f
-	};
-
-	setupVertex(quadVertices, sizeof(quadVertices), 2, 2, VAO, VBO);
-}
-
-void setupQuad(unsigned int& VAO, unsigned int& VBO)
-{
-	float vertices[] = {
-		// positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
-		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-		0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-
-		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-		1.0f,  0.5f,  0.0f,  1.0f,  0.0f
-	};
-	setupVertex(vertices, sizeof(vertices), 3, 2, VAO, VBO);
-}
-
-void setupCube(unsigned int& VAO, unsigned int& VBO)
-{
-	float cubeVertices[] = {
-		// back face
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // bottom-left
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top-right
-		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, // bottom-right
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top-right
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // bottom-left
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, // top-left
-		// front face
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // bottom-left
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, // bottom-right
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f, // top-right
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f, // top-right
-		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, // top-left
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // bottom-left
-		// left face
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // top-right
-		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top-left
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // bottom-right
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // top-right
-		// right face
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // top-left
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // bottom-right
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top-right
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // bottom-right
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // top-left
-		0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // bottom-left
-		// bottom face
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // top-right
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f, // top-left
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, // bottom-left
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, // bottom-left
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, // bottom-right
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, // top-right
-		// top face
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, // top-left
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // bottom-right
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top-right
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, // bottom-right
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, // top-left
-		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f // bottom-left
-	};
-
-	setupVertex(cubeVertices, sizeof(cubeVertices), 3, 2, VAO, VBO);
-}
-
-void setupCubeNoTexture(unsigned int& VAO, unsigned int& VBO)
-{
-	float cubeVertices[] = {
-		// positions          
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
-	};
-
-	setupVertex(cubeVertices, sizeof(cubeVertices), 3, 0, VAO, VBO);
-}
-
-void setupPlane(unsigned int& VAO, unsigned int& VBO)
-{
-	float planeVertices[] = {
-		// positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
-		 5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-		-5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
-		-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-
-		 5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-		-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-		 5.0f, -0.5f, -5.0f,  2.0f, 2.0f
-	};
-
-	setupVertex(planeVertices, sizeof(planeVertices), 3, 2, VAO, VBO);
 }
 
 void drawFloor(Shader& shader, unsigned int planeVAO, unsigned int floorTexture)
@@ -475,14 +302,17 @@ void rearViewLoop(GLFWwindow* window)
 {
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO;
-	unsigned int screenQuadVAO, screenQuadVBO, mirrorQuadVAO, mirrorQuadVBO;
+	VertexArrayInitializer vaInit;
+	unsigned int cubeVAO, planeVAO, quadVAO, mirrorQuadVAO;
+	unsigned int screenQuadVAO, skyboxVAO, cubeReflectionVAO;
 
-	setupCube(cubeVAO, cubeVBO);
-	setupPlane(planeVAO, planeVBO);
-	setupQuad(quadVAO, quadVBO);
-	setupScreenQuad(screenQuadVAO, screenQuadVBO);
-	setupMirrorQuad(mirrorQuadVAO, mirrorQuadVBO);
+	vaInit.SetupCube(cubeReflectionVAO);
+	vaInit.SetupCube(cubeVAO);
+	vaInit.SetupPlane(planeVAO);
+	vaInit.Setup3DQuad(quadVAO);
+	vaInit.SetupScreenQuad(screenQuadVAO);
+	vaInit.SetupMirrorQuad(mirrorQuadVAO);
+	vaInit.SetupCubeNoTexture(skyboxVAO);
 
 	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
 	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
@@ -530,8 +360,10 @@ void rearViewLoop(GLFWwindow* window)
 
 		// Draw scene in framebuffer
 		glm::mat4 model = glm::mat4(1.0f);
-		setMVPMatrix(shader, model, camera.GetViewMatrix(), GetPerspectiveProj());
-		setMVPMatrix(borderShader, model, camera.GetViewMatrix(), GetPerspectiveProj());
+		shader.Use();
+		shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
+		borderShader.Use();
+		borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
 		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
@@ -544,7 +376,8 @@ void rearViewLoop(GLFWwindow* window)
 
 		// Draw mirrored scene in framebuffer
 		model = glm::mat4(1.0f);
-		setMVPMatrix(shader, model, GetInvertedView(), GetPerspectiveProj());
+		shader.Use();
+		shader.SetMVPMatrix(model, GetInvertedView(), camera.GetPerspectiveProj());
 		drawFloor(shader, planeVAO, floorTexture);
 		drawCubes(shader, cubeVAO, cubeTexture);
 		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
@@ -563,8 +396,6 @@ void rearViewLoop(GLFWwindow* window)
 
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &planeVAO);
-	glDeleteBuffers(1, &cubeVBO);
-	glDeleteBuffers(1, &planeVBO);
 }
 
 vector<std::string> getSkyboxFaces()
@@ -597,9 +428,9 @@ vector<glm::vec3> getQuadArrayPos()
 void drawSkybox(Shader& shader, unsigned int skyboxVAO, unsigned int cubemapTexture)
 {
 	glDepthFunc(GL_LEQUAL);
-	shader.Use();
 	glm::mat4 model = glm::mat4(1.0f);
-	setMVPMatrix(shader, model, GetViewNoTranslate(), GetPerspectiveProj());
+	shader.Use();
+	shader.SetMVPMatrix(model, GetViewNoTranslate(), camera.GetPerspectiveProj());
 	glBindVertexArray(skyboxVAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
@@ -608,22 +439,46 @@ void drawSkybox(Shader& shader, unsigned int skyboxVAO, unsigned int cubemapText
 	glDepthMask(GL_LESS);
 }
 
+void mainLightScene(GLFWwindow* window)
+{
+	LightScene lightScene;
+	lightScene.Setup();
+
+	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	while (!glfwWindowShouldClose(window))
+	{
+		updateDeltaTime();
+		processInput(window);
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		lightScene.Draw(camera);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+}
+
 void mainLoop(GLFWwindow* window)
 {
 	bool bEnableFramebuffer = false;
 
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	unsigned int cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO;
-	unsigned int screenQuadVAO, screenQuadVBO, skyboxVAO, skyboxVBO;
+	//VertexArrayInitializer vaInit;
+	unsigned int cubeVAO, planeVAO, quadVAO;
+	unsigned int screenQuadVAO, skyboxVAO, cubeReflectionVAO;
 
-	setupCube(cubeVAO, cubeVBO);
-	setupPlane(planeVAO, planeVBO);
-	setupQuad(quadVAO, quadVBO);
-	setupScreenQuad(screenQuadVAO, screenQuadVBO);
-	setupCubeNoTexture(skyboxVAO, skyboxVBO);
+	VertexArrayInitializer::SetupCube(cubeReflectionVAO);
+	VertexArrayInitializer::SetupCube(cubeVAO);
+	VertexArrayInitializer::SetupPlane(planeVAO);
+	VertexArrayInitializer::Setup3DQuad(quadVAO);
+	VertexArrayInitializer::SetupScreenQuad(screenQuadVAO);
+	VertexArrayInitializer::SetupCubeNoTexture(skyboxVAO);
 
-	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
+	Shader shader(".\\shaders\\testShader.vs", ".\\shaders\\testShader.fs");
 	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
 	Shader screenShader(".\\shaders\\screenShader.vs", ".\\shaders\\screenShader.fs");
 	Shader skyboxShader(".\\shaders\\skyboxShader.vs", ".\\shaders\\skyboxShader.fs");
@@ -638,7 +493,6 @@ void mainLoop(GLFWwindow* window)
 
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
-	//
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -651,6 +505,7 @@ void mainLoop(GLFWwindow* window)
 	unsigned int framebuffer, texColorBuffer;
 	setupFramebuffer(framebuffer, texColorBuffer);
 
+
 	while (!glfwWindowShouldClose(window))
 	{
 		updateDeltaTime();
@@ -659,33 +514,39 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (bEnableFramebuffer)
-		{
-			// Setup scene framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-			glEnable(GL_DEPTH_TEST);
-		}
-
-		// Draw scene
-		glm::mat4 model = glm::mat4(1.0f);
-		setMVPMatrix(shader, model, camera.GetViewMatrix(), GetPerspectiveProj());
-		setMVPMatrix(borderShader, model, camera.GetViewMatrix(), GetPerspectiveProj());
-		drawFloor(shader, planeVAO, floorTexture);
-		drawCubes(shader, cubeVAO, cubeTexture);
-		//drawCubesBorder(borderShader, cubeVAO);
-		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
-
-		if (bEnableFramebuffer)
-		{
-			// Draw screen quads
-			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
-		}
-
-		// Skybox
-		drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
+		//if (bEnableFramebuffer)
+		//{
+		//	// Setup scene framebuffer
+		//	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		//	glEnable(GL_DEPTH_TEST);
+		//}
+		//
+		//shader.Use();
+		//shader.SetVec3("cameraPos", camera.Position);
+		//
+		//// Skybox
+		//drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
+		//
+		//// Draw scene
+		//glm::mat4 model = glm::mat4(1.0f);
+		//shader.Use();
+		//shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
+		//borderShader.Use();
+		//borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
+		////drawFloor(shader, planeVAO, floorTexture);
+		////drawCubes(shader, cubeVAO, cubeTexture);
+		//drawCubes(shader, cubeReflectionVAO, cubeTexture);
+		////drawCubesBorder(borderShader, cubeVAO);
+		////drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
+		//
+		//if (bEnableFramebuffer)
+		//{
+		//	// Draw screen quads
+		//	glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+		//	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//	glClear(GL_COLOR_BUFFER_BIT);
+		//	drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
+		//}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -693,8 +554,6 @@ void mainLoop(GLFWwindow* window)
 
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &planeVAO);
-	glDeleteBuffers(1, &cubeVBO);
-	glDeleteBuffers(1, &planeVBO);
 }
 
 int main()
@@ -712,7 +571,8 @@ int main()
 		return NULL;
 	}
 
-	mainLoop(window);
+	//mainLoop(window);
+	mainLightScene(window);
 
 	glfwTerminate();
 	return 0;

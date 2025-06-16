@@ -60,7 +60,7 @@ public:
         updateCameraVectors();
     }
 
-    glm::mat4 CustomLookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
+    glm::mat4 CustomLookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) const
     {
         glm::vec3 direction = glm::normalize(pos - target);
         glm::vec3 right = glm::normalize(glm::cross(up, direction));
@@ -84,10 +84,15 @@ public:
     }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 GetViewMatrix()
+    glm::mat4 GetViewMatrix() const
     {
         //return glm::lookAt(Position, Position + Front, Up);
         return CustomLookAt(Position, Position + Front, Up);
+    }
+
+    glm::mat4 GetPerspectiveProj() const
+    {
+        return glm::perspective(glm::radians(Zoom), 800.0f / 600.0f, 0.1f, 100.f);
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

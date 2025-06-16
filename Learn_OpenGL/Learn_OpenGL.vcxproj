@@ -508,6 +508,7 @@
     <ClInclude Include="include\glm\vec4.hpp" />
     <ClInclude Include="include\glm\vector_relational.hpp" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="include\LightScene.h" />
     <ClInclude Include="include\Mesh.h" />
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\Shader.h" />
@@ -518,6 +519,7 @@
     <ClCompile Include="include\glm\detail\glm.cpp" />
     <ClCompile Include="include\glm\glm.cppm" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\LightScene.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -673,16 +675,19 @@
     <None Include="include\glm\gtx\vector_angle.inl" />
     <None Include="include\glm\gtx\vector_query.inl" />
     <None Include="include\glm\gtx\wrap.inl" />
+    <None Include="shaders\lightSourceShader.fs" />
+    <None Include="shaders\lightSourceShader.vs" />
     <None Include="shaders\skyboxShader.fs" />
     <None Include="shaders\skyboxShader.vs" />
     <None Include="shaders\depth_testing.fs" />
     <None Include="shaders\depth_testing.vs" />
-    <None Include="shaders\lightShader.fs" />
     <None Include="shaders\screenShader.fs" />
-    <None Include="shaders\shader.fs" />
-    <None Include="shaders\shader.vs" />
+    <None Include="shaders\litShader.fs" />
+    <None Include="shaders\litShader.vs" />
     <None Include="shaders\shaderSingleColor.fs" />
     <None Include="shaders\screenShader.vs" />
+    <None Include="shaders\testShader.fs" />
+    <None Include="shaders\testShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\blending_transparent_window.png" />

@@ -26,6 +26,8 @@ public:
 	void SetMat4(const std::string& name, const glm::mat4& value) const;
 	void SetVec3(const std::string& name, const glm::vec3& value) const;
 
+	void SetMVPMatrix(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const;
+
 private:
 	std::string GetCodeFromFile(const char* filePath);
 	int CompileShader(const char* shaderSource, GLenum shaderType, unsigned int& outShader);

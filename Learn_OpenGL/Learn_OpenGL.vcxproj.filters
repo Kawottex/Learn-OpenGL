@@ -1164,6 +1164,9 @@
     <ClInclude Include="include\assimp\revision.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\LightScene.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1191,6 +1194,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Model.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LightScene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1609,7 +1615,6 @@
     <None Include="include\glm\gtx\wrap.inl">
       <Filter>Fichiers d%27en-tête</Filter>
     </None>
-    <None Include="shaders\lightShader.fs" />
     <None Include="include\assimp\color4.inl">
       <Filter>Fichiers d%27en-tête</Filter>
     </None>
@@ -1635,8 +1640,8 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </None>
     <None Include="assimp-vc143-mtd.dll" />
-    <None Include="shaders\shader.fs" />
-    <None Include="shaders\shader.vs" />
+    <None Include="shaders\litShader.fs" />
+    <None Include="shaders\litShader.vs" />
     <None Include="shaders\screenShader.fs" />
     <None Include="shaders\depth_testing.fs" />
     <None Include="shaders\depth_testing.vs" />
@@ -1644,6 +1649,10 @@
     <None Include="shaders\screenShader.vs" />
     <None Include="shaders\skyboxShader.fs" />
     <None Include="shaders\skyboxShader.vs" />
+    <None Include="shaders\testShader.fs" />
+    <None Include="shaders\testShader.vs" />
+    <None Include="shaders\lightSourceShader.fs" />
+    <None Include="shaders\lightSourceShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png">
