@@ -11,7 +11,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <VertexArrayInitializer.h>
+
 #include <LightScene.h>
+#include <ModelScene.h>
 
 Camera camera;
 
@@ -461,6 +463,28 @@ void mainLightScene(GLFWwindow* window)
 	}
 }
 
+void mainModelScene(GLFWwindow* window)
+{
+	ModelScene modelScene;
+	modelScene.Setup();
+
+	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	while (!glfwWindowShouldClose(window))
+	{
+		updateDeltaTime();
+		processInput(window);
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		modelScene.Draw(camera);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+}
+
 void mainLoop(GLFWwindow* window)
 {
 	bool bEnableFramebuffer = false;
@@ -514,39 +538,39 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//if (bEnableFramebuffer)
-		//{
-		//	// Setup scene framebuffer
-		//	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		//	glEnable(GL_DEPTH_TEST);
-		//}
-		//
-		//shader.Use();
-		//shader.SetVec3("cameraPos", camera.Position);
-		//
-		//// Skybox
-		//drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
-		//
-		//// Draw scene
-		//glm::mat4 model = glm::mat4(1.0f);
-		//shader.Use();
-		//shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		//borderShader.Use();
-		//borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		////drawFloor(shader, planeVAO, floorTexture);
-		////drawCubes(shader, cubeVAO, cubeTexture);
-		//drawCubes(shader, cubeReflectionVAO, cubeTexture);
-		////drawCubesBorder(borderShader, cubeVAO);
-		////drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
-		//
-		//if (bEnableFramebuffer)
-		//{
-		//	// Draw screen quads
-		//	glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-		//	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		//	glClear(GL_COLOR_BUFFER_BIT);
-		//	drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
-		//}
+		if (bEnableFramebuffer)
+		{
+			// Setup scene framebuffer
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			glEnable(GL_DEPTH_TEST);
+		}
+		
+		shader.Use();
+		shader.SetVec3("cameraPos", camera.Position);
+		
+		// Skybox
+		drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
+		
+		// Draw scene
+		glm::mat4 model = glm::mat4(1.0f);
+		shader.Use();
+		shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
+		borderShader.Use();
+		borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
+		//drawFloor(shader, planeVAO, floorTexture);
+		//drawCubes(shader, cubeVAO, cubeTexture);
+		drawCubes(shader, cubeReflectionVAO, cubeTexture);
+		//drawCubesBorder(borderShader, cubeVAO);
+		//drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
+		
+		if (bEnableFramebuffer)
+		{
+			// Draw screen quads
+			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -572,8 +596,9 @@ int main()
 	}
 
 	//mainLoop(window);
-	mainLightScene(window);
-
+	//mainLightScene(window);
+	mainModelScene(window);
+	
 	glfwTerminate();
 	return 0;
 }

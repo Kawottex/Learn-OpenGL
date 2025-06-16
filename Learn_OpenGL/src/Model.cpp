@@ -4,20 +4,16 @@
 #include <assimp/material.h>
 #include <stb_image.h>
 
+Model::Model()
+{
+}
+
 Model::Model(const char* path)
 {
-	loadModel(path);
+	LoadModel(path);
 }
 
-void Model::Draw(Shader& shader)
-{
-	for (unsigned int i = 0; i < meshes.size(); i++)
-	{
-		meshes[i].Draw(shader);
-	}
-}
-
-void Model::loadModel(string path)
+void Model::LoadModel(string path)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
@@ -29,6 +25,14 @@ void Model::loadModel(string path)
 
 	directory = path.substr(0, path.find_last_of('\\'));
 	processNode(scene->mRootNode, scene);
+}
+
+void Model::Draw(Shader& shader)
+{
+	for (unsigned int i = 0; i < meshes.size(); i++)
+	{
+		meshes[i].Draw(shader);
+	}
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)

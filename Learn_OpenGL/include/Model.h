@@ -12,7 +12,9 @@ using namespace std;
 class Model
 {
 public:
+	Model();
 	Model(const char* path);
+	void LoadModel(string path);
 	void Draw(Shader& shader);
 
 	static unsigned int TextureFromFile(const char* path, const string& directory);
@@ -22,7 +24,7 @@ private:
 	vector<Mesh> meshes;
 	string directory;
 
-	void loadModel(string path);
+private:
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 	vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
