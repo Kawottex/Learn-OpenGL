@@ -1,7 +1,21 @@
 #include <Shader.h>
 #include <glm/gtc/type_ptr.hpp>
 
+Shader::Shader()
+{
+}
+
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
+{
+	LoadShader(vertexPath, fragmentPath);
+}
+
+void Shader::Use()
+{
+	glUseProgram(ID);
+}
+
+void Shader::LoadShader(const char* vertexPath, const char* fragmentPath)
 {
 	// 1. retrieve the vertex/fragment source code from filePath
 	std::string vertexCode = GetCodeFromFile(vertexPath);
@@ -19,11 +33,6 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-}
-
-void Shader::Use()
-{
-	glUseProgram(ID);
 }
 
 void Shader::SetBool(const std::string& name, bool value) const

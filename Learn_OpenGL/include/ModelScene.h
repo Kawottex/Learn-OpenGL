@@ -4,13 +4,14 @@
 #include <Camera.h>
 #include <Model.h>
 #include <vector>
+#include <ICustomScene.h>
 
-class ModelScene
+class ModelScene : public ICustomScene
 {
 public:
 	ModelScene();
-	void Setup();
-	void Draw(const Camera& camera);
+	virtual void Setup() override;
+	virtual void Draw(const Camera& camera) override;
 
 private:
 	void SetupMaterial(Shader& shader);

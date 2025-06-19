@@ -12,13 +12,18 @@ class Shader
 {
 public:
 	// the program ID
-	unsigned int ID;
+	unsigned int ID = 0;
+
+	// Base constructor with no logic
+	Shader();
 
 	// constructor reads and builds the shader
 	Shader(const char* vertexPath, const char* fragmentPath);
 
 	// use/activate the shader
 	void Use();
+
+	void LoadShader(const char* vertexPath, const char* fragmentPath);
 
 	void SetBool(const std::string& name, bool value) const;
 	void SetInt(const std::string& name, int value) const;

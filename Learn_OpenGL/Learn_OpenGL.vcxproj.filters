@@ -1170,6 +1170,15 @@
     <ClInclude Include="include\ModelScene.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\StencilScene.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ICustomScene.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CustomSceneBuilder.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1203,6 +1212,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\ModelScene.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StencilScene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1659,6 +1671,9 @@
     <None Include="shaders\testShader.vs" />
     <None Include="shaders\lightSourceShader.fs" />
     <None Include="shaders\lightSourceShader.vs" />
+    <None Include="shaders\stencil_testing.vs" />
+    <None Include="shaders\stencil_testing.fs" />
+    <None Include="shaders\stencil_single_color.fs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\container2.png">

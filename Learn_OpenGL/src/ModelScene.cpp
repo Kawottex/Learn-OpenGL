@@ -3,13 +3,13 @@
 #include <VertexArrayInitializer.h>
 #include <stb_image.h>
 
-ModelScene::ModelScene() :
-	m_modelShader(".\\shaders\\litShader.vs", ".\\shaders\\litShader.fs")
+ModelScene::ModelScene()
 {
 }
 
 void ModelScene::Setup()
 {
+	m_modelShader.LoadShader(".\\shaders\\litShader.vs", ".\\shaders\\litShader.fs");
 	SetupMaterial(m_modelShader);
 	SetupDirectionalLight(m_modelShader);
 	SetupPointLights(m_modelShader);

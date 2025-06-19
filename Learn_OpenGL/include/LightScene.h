@@ -1,15 +1,16 @@
 #pragma once
 
-#include "Shader.h"
-#include "Camera.h"
+#include <Shader.h>
+#include <Camera.h>
 #include <vector>
+#include <ICustomScene.h>
 
-class LightScene
+class LightScene : public ICustomScene
 {
 public:
 	LightScene();
-	void Setup();
-	void Draw(const Camera& camera);
+	virtual void Setup() override;
+	virtual void Draw(const Camera& camera) override;
 
 private:
 	void SetupMaterial(Shader& shader);

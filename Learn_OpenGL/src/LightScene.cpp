@@ -2,16 +2,17 @@
 #include <Model.h>
 #include "VertexArrayInitializer.h"
 
-LightScene::LightScene() : 
-	m_litShader(".\\shaders\\litShader.vs", ".\\shaders\\litShader.fs"),
-	m_lightSourceShader(".\\shaders\\lightSourceShader.vs", ".\\shaders\\lightSourceShader.fs")
+LightScene::LightScene()
 {
-	m_diffuseMap = Model::TextureFromFile("container2.png", ".\\resources\\textures");
-	m_specularMap = Model::TextureFromFile("container2_specular.png", ".\\resources\\textures");
 }
 
 void LightScene::Setup()
 {
+	m_litShader.LoadShader(".\\shaders\\litShader.vs", ".\\shaders\\litShader.fs");
+	m_lightSourceShader.LoadShader(".\\shaders\\lightSourceShader.vs", ".\\shaders\\lightSourceShader.fs");
+	m_diffuseMap = Model::TextureFromFile("container2.png", ".\\resources\\textures");
+	m_specularMap = Model::TextureFromFile("container2_specular.png", ".\\resources\\textures");
+
 	SetupMaterial(m_litShader);
 	SetupDirectionalLight(m_litShader);
 	SetupPointLights(m_litShader);

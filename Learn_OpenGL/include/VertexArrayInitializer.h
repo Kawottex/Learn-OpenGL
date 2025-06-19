@@ -7,6 +7,7 @@ public:
 	static void SetupRectangle(unsigned int& VAO);
 	static void SetupCube(unsigned int& VAO);
 	static void SetupCubeNoTexture(unsigned int& VAO);
+	static void SetupCubeNoNormal(unsigned int& VAO);
 	static void Setup2DQuad(unsigned int& VAO, const float* vertices, unsigned int size);
 	static void Setup3DQuad(unsigned int& VAO);
 	static void SetupPlane(unsigned int& VAO);

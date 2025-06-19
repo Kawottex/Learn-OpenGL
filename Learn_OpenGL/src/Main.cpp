@@ -12,8 +12,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <VertexArrayInitializer.h>
 
-#include <LightScene.h>
-#include <ModelScene.h>
+#include <ICustomScene.h>
+#include <CustomSceneBuilder.h>
 
 Camera camera;
 
@@ -441,11 +441,9 @@ void drawSkybox(Shader& shader, unsigned int skyboxVAO, unsigned int cubemapText
 	glDepthMask(GL_LESS);
 }
 
-void mainLightScene(GLFWwindow* window)
+void mainCustomSceneLoop(GLFWwindow* window, std::shared_ptr<ICustomScene> scene)
 {
-	LightScene lightScene;
-	lightScene.Setup();
-
+	scene->Setup();
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 	while (!glfwWindowShouldClose(window))
@@ -456,29 +454,7 @@ void mainLightScene(GLFWwindow* window)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		lightScene.Draw(camera);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
-}
-
-void mainModelScene(GLFWwindow* window)
-{
-	ModelScene modelScene;
-	modelScene.Setup();
-
-	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
-
-	while (!glfwWindowShouldClose(window))
-	{
-		updateDeltaTime();
-		processInput(window);
-
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		modelScene.Draw(camera);
+		scene->Draw(camera);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -595,9 +571,12 @@ int main()
 		return NULL;
 	}
 
+	CustomSceneType sceneType = CustomSceneType::STENCIL_SCENE;
+	std::shared_ptr<ICustomScene> scene = CustomSceneBuilder::BuildCustomScene(sceneType);
+
 	//mainLoop(window);
 	//mainLightScene(window);
-	mainModelScene(window);
+	mainCustomSceneLoop(window, scene);
 	
 	glfwTerminate();
 	return 0;
