@@ -217,8 +217,10 @@
     <ClInclude Include="include\assimp\XmlParser.h" />
     <ClInclude Include="include\assimp\XMLTools.h" />
     <ClInclude Include="include\assimp\ZipArchiveIOSystem.h" />
+    <ClInclude Include="include\BlendingScene.h" />
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\CustomSceneBuilder.h" />
+    <ClInclude Include="include\FramebufferScene.h" />
     <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\glm\common.hpp" />
     <ClInclude Include="include\glm\detail\compute_common.hpp" />
@@ -522,6 +524,8 @@
   <ItemGroup>
     <ClCompile Include="include\glm\detail\glm.cpp" />
     <ClCompile Include="include\glm\glm.cppm" />
+    <ClCompile Include="src\BlendingScene.cpp" />
+    <ClCompile Include="src\FramebufferScene.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\LightScene.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -681,6 +685,12 @@
     <None Include="include\glm\gtx\vector_angle.inl" />
     <None Include="include\glm\gtx\vector_query.inl" />
     <None Include="include\glm\gtx\wrap.inl" />
+    <None Include="shaders\blending.fs" />
+    <None Include="shaders\blending.vs" />
+    <None Include="shaders\framebuffers.fs" />
+    <None Include="shaders\framebuffers.vs" />
+    <None Include="shaders\framebuffers_screen.fs" />
+    <None Include="shaders\framebuffers_screen.vs" />
     <None Include="shaders\lightSourceShader.fs" />
     <None Include="shaders\lightSourceShader.vs" />
     <None Include="shaders\skyboxShader.fs" />

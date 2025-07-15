@@ -13,6 +13,7 @@ public:
 	static void SetupPlane(unsigned int& VAO);
 	static void SetupMirrorQuad(unsigned int& VAO);
 	static void SetupScreenQuad(unsigned int& VAO);
+	static void SetupTransparent(unsigned int& VAO);
 
 private:
 	static unsigned int setupEBO(const unsigned int* indices, unsigned int size);

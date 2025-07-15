@@ -29,6 +29,9 @@ void StencilScene::Setup()
 
 void StencilScene::Draw(const Camera& camera)
 {
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
 	m_singleColorShader.Use();
 
 	glm::mat4 model = glm::mat4(1.0f);

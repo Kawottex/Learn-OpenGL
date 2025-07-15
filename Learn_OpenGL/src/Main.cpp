@@ -571,7 +571,7 @@ int main()
 		return NULL;
 	}
 
-	CustomSceneType sceneType = CustomSceneType::STENCIL_SCENE;
+	CustomSceneType sceneType = CustomSceneType::FRAMEBUFFER_SCENE;
 	std::shared_ptr<ICustomScene> scene = CustomSceneBuilder::BuildCustomScene(sceneType);
 
 	//mainLoop(window);
