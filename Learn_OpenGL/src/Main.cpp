@@ -125,140 +125,6 @@ void updateDeltaTime()
 	lastFrame = currentFrame;
 }
 
-void drawCubes(Shader& shader, unsigned int cubeVAO, unsigned int cubeTexture)
-{
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilMask(0xFF);
-
-	shader.Use();
-	glm::mat4 model = glm::mat4(1.0f);
-	glBindVertexArray(cubeVAO);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, cubeTexture);
-	model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-	shader.SetMat4("model", model);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-	shader.SetMat4("model", model);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-}
-
-void drawScreenQuad(Shader& shader, unsigned int quadVAO, unsigned int texture)
-{
-	shader.Use();
-	glBindVertexArray(quadVAO);
-	glDisable(GL_DEPTH_TEST);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-void setupFramebuffer(unsigned int &fbo, unsigned int& texColorBuffer)
-{
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	// texture setup
-	glGenTextures(1, &texColorBuffer);
-	glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// apply texture to framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
-
-	// render buffer
-	unsigned int rbo;
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	{
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-unsigned int loadCubemap(const vector<string>& faces)
-{
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-	int width, height, nrChannels;
-	unsigned char* data;
-	for (unsigned int i = 0; i < faces.size(); i++)
-	{
-		data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width,
-				height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		}
-		else
-		{
-			std::cout << "Cubemap failed to load at path: " << faces[i] << std::endl;
-		}
-		stbi_image_free(data);
-	}
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	
-	return textureID;
-}
-
-vector<std::string> getSkyboxFaces()
-{
-	vector<std::string> faces
-	{
-		".\\resources\\textures\\skybox\\right.jpg",
-		".\\resources\\textures\\skybox\\left.jpg",
-		".\\resources\\textures\\skybox\\top.jpg",
-		".\\resources\\textures\\skybox\\bottom.jpg",
-		".\\resources\\textures\\skybox\\front.jpg",
-		".\\resources\\textures\\skybox\\back.jpg"
-	};
-	return faces;
-}
-
-vector<glm::vec3> getQuadArrayPos()
-{
-	vector<glm::vec3> quadArrayPos
-	{
-		glm::vec3(-1.5f, 0.0f, -0.48f),
-		glm::vec3(1.5f, 0.0f, 0.51f),
-		glm::vec3(0.0f, 0.0f, 0.7f),
-		glm::vec3(-0.3f, 0.0f, -2.3f),
-		glm::vec3(0.5f, 0.0f, -0.6f)
-	};
-	return quadArrayPos;
-}
-
-void drawSkybox(Shader& shader, unsigned int skyboxVAO, unsigned int cubemapTexture)
-{
-	glDepthFunc(GL_LEQUAL);
-	glm::mat4 model = glm::mat4(1.0f);
-	shader.Use();
-	shader.SetMVPMatrix(model, GetViewNoTranslate(), camera.GetPerspectiveProj());
-	glBindVertexArray(skyboxVAO);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-	glDepthMask(GL_LESS);
-}
-
 void mainCustomSceneLoop(GLFWwindow* window, std::shared_ptr<ICustomScene> scene)
 {
 	scene->Setup();
@@ -281,48 +147,10 @@ void mainCustomSceneLoop(GLFWwindow* window, std::shared_ptr<ICustomScene> scene
 
 void mainLoop(GLFWwindow* window)
 {
-	bool bEnableFramebuffer = false;
-
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
-
-	//VertexArrayInitializer vaInit;
-	unsigned int cubeVAO, planeVAO, quadVAO;
-	unsigned int screenQuadVAO, skyboxVAO, cubeReflectionVAO;
-
-	VertexArrayInitializer::SetupCube(cubeReflectionVAO);
-	VertexArrayInitializer::SetupCube(cubeVAO);
-	VertexArrayInitializer::SetupPlane(planeVAO);
-	VertexArrayInitializer::Setup3DQuad(quadVAO);
-	VertexArrayInitializer::SetupScreenQuad(screenQuadVAO);
-	VertexArrayInitializer::SetupCubeNoTexture(skyboxVAO);
-
-	Shader shader(".\\shaders\\testShader.vs", ".\\shaders\\testShader.fs");
-	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
-	Shader screenShader(".\\shaders\\screenShader.vs", ".\\shaders\\screenShader.fs");
-	Shader skyboxShader(".\\shaders\\skyboxShader.vs", ".\\shaders\\skyboxShader.fs");
-
-	unsigned int cubeTexture = Model::TextureFromFile("marble.jpg", ".\\resources\\textures");
-	unsigned int floorTexture = Model::TextureFromFile("metal.png", ".\\resources\\textures");
-	unsigned int vegetationTexture = Model::TextureFromFile("grass.png", ".\\resources\\textures");
-	unsigned int windowTexture = Model::TextureFromFile("blending_transparent_window.png", ".\\resources\\textures");
-
-	vector<std::string> faces = getSkyboxFaces();
-	unsigned int cubemapTexture = loadCubemap(faces);
 
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
-	//glFrontFace(GL_CCW);
-
-	vector<glm::vec3> quadArrayPos = getQuadArrayPos();
-
-	unsigned int framebuffer, texColorBuffer;
-	setupFramebuffer(framebuffer, texColorBuffer);
-
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -332,42 +160,11 @@ void mainLoop(GLFWwindow* window)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (bEnableFramebuffer)
-		{
-			// Setup scene framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-			glEnable(GL_DEPTH_TEST);
-		}
-		
-		shader.Use();
-		shader.SetVec3("cameraPos", camera.Position);
-		
-		// Skybox
-		drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
-		
-		// Draw scene
-		glm::mat4 model = glm::mat4(1.0f);
-		shader.Use();
-		shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		borderShader.Use();
-		borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		drawCubes(shader, cubeReflectionVAO, cubeTexture);
-		
-		if (bEnableFramebuffer)
-		{
-			// Draw screen quads
-			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
-		}
+		// Logic
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteVertexArrays(1, &cubeVAO);
-	glDeleteVertexArrays(1, &planeVAO);
 }
 
 int main()
@@ -385,11 +182,10 @@ int main()
 		return NULL;
 	}
 
-	CustomSceneType sceneType = CustomSceneType::MIRRORFRAMEBUFFER_SCENE;
+	CustomSceneType sceneType = CustomSceneType::CUBEMAP_SCENE;
 	std::shared_ptr<ICustomScene> scene = CustomSceneBuilder::BuildCustomScene(sceneType);
 
 	//mainLoop(window);
-	//mainLightScene(window);
 	mainCustomSceneLoop(window, scene);
 	
 	glfwTerminate();

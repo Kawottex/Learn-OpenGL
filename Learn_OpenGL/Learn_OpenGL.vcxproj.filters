@@ -1194,6 +1194,9 @@
     <ClInclude Include="include\MirrorFramebufferScene.h">
       <Filter>Fichiers d%27en-tête\Include</Filter>
     </ClInclude>
+    <ClInclude Include="include\CubemapScene.h">
+      <Filter>Fichiers d%27en-tête\Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1241,10 +1244,13 @@
     <ClCompile Include="src\MirrorFramebufferScene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\CubemapScene.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="assimp-vc143-mtd.dll" />
-    <None Include="shaders\testShader.vs">
+    <None Include="shaders\enviroMappingShader.vs">
       <Filter>Fichiers sources\Shaders</Filter>
     </None>
     <None Include="shaders\lightSourceShader.fs">
@@ -1283,7 +1289,7 @@
     <None Include="shaders\stencil_testing.vs">
       <Filter>Fichiers sources\Shaders</Filter>
     </None>
-    <None Include="shaders\testShader.fs">
+    <None Include="shaders\enviroMappingShader.fs">
       <Filter>Fichiers sources\Shaders</Filter>
     </None>
     <None Include="shaders\depth_testing.vs">

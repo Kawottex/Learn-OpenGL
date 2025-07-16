@@ -13,10 +13,10 @@ void main()
     vec3 I = normalize(Position - cameraPos);
     
     // reflection
-    //vec3 R = reflect(I, normalize(Normal));
+    vec3 R = reflect(I, normalize(Normal));
 
     // refraction
-    vec3 R = refract(I, normalize(Normal), refractRatio);
+    //vec3 R = refract(I, normalize(Normal), refractRatio);
 
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
 }

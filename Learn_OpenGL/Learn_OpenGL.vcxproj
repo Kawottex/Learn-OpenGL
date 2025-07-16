@@ -219,6 +219,7 @@
     <ClInclude Include="include\assimp\ZipArchiveIOSystem.h" />
     <ClInclude Include="include\BlendingScene.h" />
     <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\CubemapScene.h" />
     <ClInclude Include="include\CustomSceneBuilder.h" />
     <ClInclude Include="include\FramebufferScene.h" />
     <ClInclude Include="include\glad\glad.h" />
@@ -526,6 +527,7 @@
     <ClCompile Include="include\glm\detail\glm.cpp" />
     <ClCompile Include="include\glm\glm.cppm" />
     <ClCompile Include="src\BlendingScene.cpp" />
+    <ClCompile Include="src\CubemapScene.cpp" />
     <ClCompile Include="src\FramebufferScene.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\LightScene.cpp" />
@@ -707,8 +709,8 @@
     <None Include="shaders\stencil_single_color.fs" />
     <None Include="shaders\stencil_testing.fs" />
     <None Include="shaders\stencil_testing.vs" />
-    <None Include="shaders\testShader.fs" />
-    <None Include="shaders\testShader.vs" />
+    <None Include="shaders\enviroMappingShader.fs" />
+    <None Include="shaders\enviroMappingShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\blending_transparent_window.png" />
