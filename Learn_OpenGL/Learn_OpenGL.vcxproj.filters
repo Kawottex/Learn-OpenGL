@@ -1191,6 +1191,9 @@
     <ClInclude Include="include\FramebufferScene.h">
       <Filter>Fichiers d%27en-tête\Include</Filter>
     </ClInclude>
+    <ClInclude Include="include\MirrorFramebufferScene.h">
+      <Filter>Fichiers d%27en-tête\Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1233,6 +1236,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\FramebufferScene.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MirrorFramebufferScene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

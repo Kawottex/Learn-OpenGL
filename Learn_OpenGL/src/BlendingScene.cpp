@@ -1,7 +1,6 @@
 #include "BlendingScene.h"
 #include <VertexArrayInitializer.h>
 #include <Model.h>
-
 #include <map>
 
 BlendingScene::BlendingScene()

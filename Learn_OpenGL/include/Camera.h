@@ -60,6 +60,23 @@ public:
         updateCameraVectors();
     }
 
+    // copy constructor
+    Camera(const Camera& copy)
+    {
+        Position = copy.Position;
+        Front = copy.Front;
+        Up = copy.Up;
+        Right = copy.Right;
+        WorldUp = copy.WorldUp;
+
+        Yaw = copy.Yaw;
+        Pitch = copy.Pitch;
+
+        MovementSpeed = copy.MovementSpeed;
+        MouseSensitivity = copy.MouseSensitivity;
+        Zoom = copy.Zoom;
+    }
+
     glm::mat4 CustomLookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) const
     {
         glm::vec3 direction = glm::normalize(pos - target);

@@ -514,6 +514,7 @@
     <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="include\LightScene.h" />
     <ClInclude Include="include\Mesh.h" />
+    <ClInclude Include="include\MirrorFramebufferScene.h" />
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\ModelScene.h" />
     <ClInclude Include="include\Shader.h" />
@@ -530,6 +531,7 @@
     <ClCompile Include="src\LightScene.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\MirrorFramebufferScene.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ModelScene.cpp" />
     <ClCompile Include="src\Shader.cpp" />

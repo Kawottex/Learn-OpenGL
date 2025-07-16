@@ -6,6 +6,7 @@
 #include <StencilScene.h>
 #include <BlendingScene.h>
 #include <FramebufferScene.h>
+#include <MirrorFramebufferScene.h>
 #include <memory>
 
 enum CustomSceneType
@@ -15,7 +16,8 @@ enum CustomSceneType
 	MODEL_SCENE,
 	STENCIL_SCENE,
 	BLENDING_SCENE,
-	FRAMEBUFFER_SCENE
+	FRAMEBUFFER_SCENE,
+	MIRRORFRAMEBUFFER_SCENE
 };
 
 class CustomSceneBuilder
@@ -35,6 +37,8 @@ public:
 				return std::shared_ptr<BlendingScene>(new BlendingScene);
 			case CustomSceneType::FRAMEBUFFER_SCENE:
 				return std::shared_ptr<FramebufferScene>(new FramebufferScene);
+			case CustomSceneType::MIRRORFRAMEBUFFER_SCENE:
+				return std::shared_ptr<MirrorFramebufferScene>(new MirrorFramebufferScene);
 			default:
 				return std::shared_ptr<ICustomScene>();
 		}

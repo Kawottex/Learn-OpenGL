@@ -125,39 +125,6 @@ void updateDeltaTime()
 	lastFrame = currentFrame;
 }
 
-void setupVertex(float* vertices, int vertSize, int posCount, int texCount, unsigned int& VAO, unsigned int& VBO)
-{
-	int posTexCount = posCount + texCount;
-
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertSize, vertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, posCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)0);
-
-	if (texCount > 0)
-	{
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, texCount, GL_FLOAT, GL_FALSE, posTexCount * sizeof(float), (void*)(posCount * sizeof(float)));
-	}
-
-	glBindVertexArray(0);
-}
-
-void drawFloor(Shader& shader, unsigned int planeVAO, unsigned int floorTexture)
-{
-	glStencilMask(0x00);
-
-	shader.Use();
-	glBindVertexArray(planeVAO);
-	glBindTexture(GL_TEXTURE_2D, floorTexture);
-	shader.SetMat4("model", glm::mat4(1.0f));
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-}
-
 void drawCubes(Shader& shader, unsigned int cubeVAO, unsigned int cubeTexture)
 {
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -175,55 +142,6 @@ void drawCubes(Shader& shader, unsigned int cubeVAO, unsigned int cubeTexture)
 	model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
 	shader.SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-}
-
-void drawCubesBorder(Shader& shader, unsigned int cubeVAO)
-{
-	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	glStencilMask(0x00);
-	glDisable(GL_DEPTH_TEST);
-
-	shader.Use();
-	glm::mat4 model = glm::mat4(1.0f);
-	glBindVertexArray(cubeVAO);
-	model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-	model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
-	shader.SetMat4("model", model);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
-	shader.SetMat4("model", model);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	glStencilMask(0xFF);
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glEnable(GL_DEPTH_TEST);
-}
-
-void drawQuadArray(Shader& shader, unsigned int quadVAO, unsigned int texture, const vector<glm::vec3>& quadArray)
-{
-	std::map<float, glm::vec3> sorted;
-	for (unsigned int i = 0; i < quadArray.size(); i++)
-	{
-		float distance = glm::length(camera.Position - quadArray[i]);
-		sorted[distance] = quadArray[i];
-	}
-
-	shader.Use();
-
-	glBindVertexArray(quadVAO);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glm::mat4 model = glm::mat4(1.0f);
-	for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it !=
-		sorted.rend(); ++it)
-	{
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, it->second);
-		shader.SetMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-	}
 }
 
 void drawScreenQuad(Shader& shader, unsigned int quadVAO, unsigned int texture)
@@ -298,106 +216,6 @@ unsigned int loadCubemap(const vector<string>& faces)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	
 	return textureID;
-}
-
-void rearViewLoop(GLFWwindow* window)
-{
-	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
-
-	VertexArrayInitializer vaInit;
-	unsigned int cubeVAO, planeVAO, quadVAO, mirrorQuadVAO;
-	unsigned int screenQuadVAO, skyboxVAO, cubeReflectionVAO;
-
-	vaInit.SetupCube(cubeReflectionVAO);
-	vaInit.SetupCube(cubeVAO);
-	vaInit.SetupPlane(planeVAO);
-	vaInit.Setup3DQuad(quadVAO);
-	vaInit.SetupScreenQuad(screenQuadVAO);
-	vaInit.SetupMirrorQuad(mirrorQuadVAO);
-	vaInit.SetupCubeNoTexture(skyboxVAO);
-
-	Shader shader(".\\shaders\\depth_testing.vs", ".\\shaders\\depth_testing.fs");
-	Shader borderShader(".\\shaders\\depth_testing.vs", ".\\shaders\\shaderSingleColor.fs");
-	Shader screenShader(".\\shaders\\screenShader.vs", ".\\shaders\\screenShader.fs");
-
-	unsigned int cubeTexture = Model::TextureFromFile("marble.jpg", ".\\resources\\textures");
-	unsigned int floorTexture = Model::TextureFromFile("metal.png", ".\\resources\\textures");
-	unsigned int windowTexture = Model::TextureFromFile("blending_transparent_window.png", ".\\resources\\textures");
-
-	stbi_set_flip_vertically_on_load(true);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	vector<glm::vec3> quadArrayPos;
-	quadArrayPos.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
-	quadArrayPos.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
-	quadArrayPos.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
-	quadArrayPos.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
-	quadArrayPos.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
-
-	unsigned int framebuffer, texColorBuffer;
-	unsigned int mirrorBuffer, texMirrorBuffer;
-
-	setupFramebuffer(framebuffer, texColorBuffer);
-	setupFramebuffer(mirrorBuffer, texMirrorBuffer);
-
-	while (!glfwWindowShouldClose(window))
-	{
-		updateDeltaTime();
-		processInput(window);
-
-		glEnable(GL_STENCIL_TEST);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		// Setup scene framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-
-		// Draw scene in framebuffer
-		glm::mat4 model = glm::mat4(1.0f);
-		shader.Use();
-		shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		borderShader.Use();
-		borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		drawFloor(shader, planeVAO, floorTexture);
-		drawCubes(shader, cubeVAO, cubeTexture);
-		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
-
-		// Setup mirror framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, mirrorBuffer);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-
-		// Draw mirrored scene in framebuffer
-		model = glm::mat4(1.0f);
-		shader.Use();
-		shader.SetMVPMatrix(model, GetInvertedView(), camera.GetPerspectiveProj());
-		drawFloor(shader, planeVAO, floorTexture);
-		drawCubes(shader, cubeVAO, cubeTexture);
-		drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
-
-		// Draw screen quads
-		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		drawScreenQuad(screenShader, screenQuadVAO, texColorBuffer);
-		drawScreenQuad(screenShader, mirrorQuadVAO, texMirrorBuffer);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
-
-	glDeleteVertexArrays(1, &cubeVAO);
-	glDeleteVertexArrays(1, &planeVAO);
 }
 
 vector<std::string> getSkyboxFaces()
@@ -533,11 +351,7 @@ void mainLoop(GLFWwindow* window)
 		shader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
 		borderShader.Use();
 		borderShader.SetMVPMatrix(model, camera.GetViewMatrix(), camera.GetPerspectiveProj());
-		//drawFloor(shader, planeVAO, floorTexture);
-		//drawCubes(shader, cubeVAO, cubeTexture);
 		drawCubes(shader, cubeReflectionVAO, cubeTexture);
-		//drawCubesBorder(borderShader, cubeVAO);
-		//drawQuadArray(shader, quadVAO, windowTexture, quadArrayPos);
 		
 		if (bEnableFramebuffer)
 		{
@@ -571,7 +385,7 @@ int main()
 		return NULL;
 	}
 
-	CustomSceneType sceneType = CustomSceneType::FRAMEBUFFER_SCENE;
+	CustomSceneType sceneType = CustomSceneType::MIRRORFRAMEBUFFER_SCENE;
 	std::shared_ptr<ICustomScene> scene = CustomSceneBuilder::BuildCustomScene(sceneType);
 
 	//mainLoop(window);
