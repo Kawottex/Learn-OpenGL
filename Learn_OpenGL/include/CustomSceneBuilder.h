@@ -8,6 +8,7 @@
 #include <FramebufferScene.h>
 #include <MirrorFramebufferScene.h>
 #include <CubemapScene.h>
+#include <TestScene.h>
 #include <memory>
 
 enum CustomSceneType
@@ -19,7 +20,8 @@ enum CustomSceneType
 	BLENDING_SCENE,
 	FRAMEBUFFER_SCENE,
 	MIRRORFRAMEBUFFER_SCENE,
-	CUBEMAP_SCENE
+	CUBEMAP_SCENE,
+	TEST_SCENE
 };
 
 class CustomSceneBuilder
@@ -43,6 +45,8 @@ public:
 				return std::shared_ptr<MirrorFramebufferScene>(new MirrorFramebufferScene);
 			case CustomSceneType::CUBEMAP_SCENE:
 				return std::shared_ptr<CubemapScene>(new CubemapScene);
+			case CustomSceneType::TEST_SCENE:
+				return std::shared_ptr<TestScene>(new TestScene);
 			default:
 				return std::shared_ptr<ICustomScene>();
 		}

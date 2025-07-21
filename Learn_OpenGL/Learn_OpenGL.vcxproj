@@ -521,6 +521,7 @@
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\StencilScene.h" />
+    <ClInclude Include="include\TestScene.h" />
     <ClInclude Include="include\VertexArrayInitializer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -539,6 +540,7 @@
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\StencilScene.cpp" />
+    <ClCompile Include="src\TestScene.cpp" />
     <ClCompile Include="src\VertexArrayInitializer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -711,6 +713,8 @@
     <None Include="shaders\stencil_testing.vs" />
     <None Include="shaders\enviroMappingShader.fs" />
     <None Include="shaders\enviroMappingShader.vs" />
+    <None Include="shaders\testShader.fs" />
+    <None Include="shaders\testShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\blending_transparent_window.png" />

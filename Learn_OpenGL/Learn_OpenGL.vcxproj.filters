@@ -1197,6 +1197,9 @@
     <ClInclude Include="include\CubemapScene.h">
       <Filter>Fichiers d%27en-tête\Include</Filter>
     </ClInclude>
+    <ClInclude Include="include\TestScene.h">
+      <Filter>Fichiers d%27en-tête\Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -1245,6 +1248,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\CubemapScene.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TestScene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1752,6 +1758,12 @@
       <Filter>Fichiers sources\Shaders</Filter>
     </None>
     <None Include="shaders\framebuffers_screen.vs">
+      <Filter>Fichiers sources\Shaders</Filter>
+    </None>
+    <None Include="shaders\testShader.fs">
+      <Filter>Fichiers sources\Shaders</Filter>
+    </None>
+    <None Include="shaders\testShader.vs">
       <Filter>Fichiers sources\Shaders</Filter>
     </None>
   </ItemGroup>

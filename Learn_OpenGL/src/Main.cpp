@@ -182,7 +182,7 @@ int main()
 		return NULL;
 	}
 
-	CustomSceneType sceneType = CustomSceneType::CUBEMAP_SCENE;
+	CustomSceneType sceneType = CustomSceneType::TEST_SCENE;
 	std::shared_ptr<ICustomScene> scene = CustomSceneBuilder::BuildCustomScene(sceneType);
 
 	//mainLoop(window);
