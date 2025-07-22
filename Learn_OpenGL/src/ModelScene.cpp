@@ -24,7 +24,7 @@ void ModelScene::Setup()
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 
-	m_model.LoadModel(".\\resources\\models\\backpack\\backpack.obj");
+	m_model.LoadModel(".\\resources\\models\\backpack\\backpack.blobj");
 }
 
 void ModelScene::Draw(const Camera& camera)
